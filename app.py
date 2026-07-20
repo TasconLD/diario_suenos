@@ -15,10 +15,23 @@ DB_CONFIG = {
     "host": "localhost",
     "port": "5432"
 }
+# Reemplaza tu configuración de DB_CONFIG u obtener_conexion por algo como esto:
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def obtener_conexion():
-    """Establece y retorna la conexión activa con PostgreSQL."""
-    return psycopg2.connect(**DB_CONFIG)
+    if DATABASE_URL:
+        # En Render (Producción) usará la URL larga de Neon
+        return psycopg2.connect(DATABASE_URL)
+    else:
+        # En tu PC local (Desarrollo) usa los datos que tenías antes
+        # Cambia esto por tus datos locales reales si los necesitas
+        return psycopg2.connect(
+            dbname="tu_bd_local",
+            user="postgres",
+            password="tu_password",
+            host="localhost",
+            port="5432"
+        )
 
 def inicializar_base_datos():
     """Crea la tabla en PostgreSQL si no existe al arrancar la aplicación."""
