@@ -1,0 +1,24 @@
+[
+    {
+        "id": "1784458133521",
+        "titulo": "Zoologico",
+        "fecha": "2026-07-19",
+        "descripcion": "Tigre me lame la cara ",
+        "categorias": [
+            "bonito"
+        ],
+        "calidad_sueno": "5",
+        "destacado": false
+    },
+    {
+        "id": "1784458167480",
+        "titulo": "Vuelo",
+        "fecha": "2026-07-17",
+        "descripcion": "Vuelo alto por cali ",
+        "categorias": [
+            "lucido"
+        ],
+        "calidad_sueno": "3",
+        "destacado": true
+    }
+]

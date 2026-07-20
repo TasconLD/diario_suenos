@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diario de Sueños</title>
+    
+    <!-- Meta etiquetas PWA Estándar Modernas -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Diario de Sueños">
+    <meta name="theme-color" content="#4f46e5">
+
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen font-sans antialiased transition-colors duration-300 relative">
+
+    <!-- BOTÓN DE TEMA EN UNA ESQUINA FLOTANTE (SUPERIOR DERECHA) -->
+    <div class="absolute top-4 right-4 z-40">
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition duration-150 border border-slate-200 dark:border-slate-700 shadow-sm">
+            <i id="theme-toggle-dark-icon" class="hidden fa-solid fa-moon text-sm md:text-base"></i>
+            <i id="theme-toggle-light-icon" class="hidden fa-solid fa-sun text-sm md:text-base"></i>
+        </button>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 py-4 md:py-8">
+        
+        <!-- HEADER PRINCIPAL -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 md:pb-6 pr-12 md:pr-0">
+            <div class="text-center md:text-left">
+                <h1 class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-500 bg-clip-text text-transparent tracking-tight">
+                    <i class="fa-solid fa-moon mr-2 text-indigo-500 dark:text-indigo-400 animate-pulse"></i>Diario de Sueños
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs md:text-sm">Explora los misterios de tu mente subconsciente</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
+                <!-- BOTÓN INSTALAR APP RE-INTEGRADO -->
+                <button id="btn-instalar" class="hidden bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-900 font-bold text-xs md:text-sm px-3.5 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-download"></i> Instalar App
+                </button>
+
+                <button onclick="document.getElementById('modal-registro').classList.remove('hidden')" 
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Registrar Sueño
+                </button>
+                
+                <a href="/exportar" 
+                   class="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-sm">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i> Exportar PDF
+                </a>
+            </div>
+        </header>
+
+        <!-- TARJETAS DE ESTADÍSTICAS -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-8">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+                <div class="p-2 rounded-xl bg-blue-500/10 text-blue-500 dark:text-blue-400"><i class="fa-solid fa-book text-base md:text-lg"></i></div>
+                <div>
+                    <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Recuerdos</p>
+                    <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.total }}</p>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+                <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-face-smile text-base md:text-lg"></i></div>
+                <div>
+                    <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Bonitos</p>
+                    <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">
+                        {{stats.bonitos if stats.bonitos is defined else (stats.bonito if stats.bonito is defined else 0)}}
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+                <div class="p-2 rounded-xl bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"><i class="fa-solid fa-wand-magic-sparkles text-base md:text-lg"></i></div>
+                <div>
+                    <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Lúcidos</p>
+                    <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.lucidos }}</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+                <div class="p-2 rounded-xl bg-red-500/10 text-red-500 dark:text-red-400"><i class="fa-solid fa-skull text-base md:text-lg"></i></div>
+                <div>
+                    <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pesadillas</p>
+                    <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.pesadillas }}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE GRÁFICOS -->
+        {% if stats.total > 0 %}
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 md:mb-8">
+            <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col items-center">
+                <h4 class="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 self-start"><i class="fa-solid fa-chart-pie mr-2"></i> Distribución</h4>
+                <div class="w-full max-w-[150px]">
+                    <canvas id="chartCategorias"></canvas>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                <h4 class="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-circle-info mr-2"></i> Análisis</h4>
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Registros guardados: <strong class="text-indigo-500 font-semibold">{{ stats.total }}</strong>. Descanso promedio: <strong class="text-emerald-500 font-semibold">{{ stats.promedio }} / 5</strong>.
+                </p>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- FILTROS Y BÚSQUEDA -->
+        <section class="flex flex-col md:flex-row gap-3 justify-between items-center mb-6 bg-white dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex flex-wrap gap-1.5 w-full md:w-auto">
+                <a href="/" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Todos</a>
+                <a href="/?cat=destacado" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'destacado' %}bg-amber-500 text-slate-950 shadow-md border border-amber-400{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">⭐ Destacados</a>
+                <a href="/?cat=bonito" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'bonito' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">😊 Bonitos</a>
+                <a href="/?cat=lucido" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'lucido' %}bg-yellow-500 text-slate-900 shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">✨ Lúcidos</a>
+                <a href="/?cat=pesadilla" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'pesadilla' %}bg-red-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">👹 Pesadillas</a>
+            </div>
+            <form action="/" method="GET" class="relative w-full md:w-72">
+                {% if categoria_actual %}
+                    <input type="hidden" name="cat" value="{{ categoria_actual }}">
+                {% endif %}
+                <input type="text" name="q" value="{{ query_busqueda }}" placeholder="Buscar..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            </form>
+        </section>
+
+        <!-- LÍNEA DE TIEMPO PRINCIPAL -->
+        <main class="relative border-l-2 border-slate-200 dark:border-slate-800 ml-3 md:ml-6 pl-5 md:pl-8 space-y-6">
+            {% for sueno in suenos %}
+            
+            {% set es_destacado = sueno.destacado or sueno.destacado == 1 or sueno.destacado|string|lower == 'true' %}
+            
+            {% if not categoria_actual or (categoria_actual == 'destacado' and es_destacado) or (categoria_actual != 'destacado' and categoria_actual in sueno.categorias|map('lower')) %}
+            
+            <article class="relative border rounded-xl p-4 transition duration-200 flex flex-col justify-between shadow-sm
+                {% if 'lucido' in sueno.categorias|map('lower') %}bg-yellow-50/40 border-yellow-200 dark:bg-yellow-950/10 dark:border-yellow-900/40
+                {% elif 'pesadilla' in sueno.categorias|map('lower') %}bg-red-50/40 border-red-200 dark:bg-red-950/10 dark:border-red-900/40
+                {% elif 'bonito' in sueno.categorias|map('lower') %}bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/10 dark:border-emerald-900/40
+                {% else %}bg-blue-50/30 border-blue-200 dark:bg-blue-950/10 dark:border-blue-900/40{% endif %}">
+                
+                <div class="absolute -left-[27px] md:-left-[39px] top-6 w-3.5 h-3.5 rounded-full border-4 bg-white dark:bg-slate-900
+                    {% if 'lucido' in sueno.categorias|map('lower') %}border-yellow-400
+                    {% elif 'pesadilla' in sueno.categorias|map('lower') %}border-red-500
+                    {% elif 'bonito' in sueno.categorias|map('lower') %}border-emerald-400
+                    {% else %}border-blue-400{% endif %}"></div>
+
+                <div>
+                    <div class="flex justify-between items-start gap-2 mb-1">
+                        <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar"></i> {{ sueno.fecha }}</span>
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                            Calidad: {{ sueno.calidad_sueno }}/5
+                        </span>
+                    </div>
+                    
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        {{ sueno.titulo }}
+                        {% if es_destacado %}
+                            <i class="fa-solid fa-star text-amber-400 text-sm animate-pulse" title="Destacado"></i>
+                        {% endif %}
+                    </h3>
+                    
+                    <div class="flex flex-wrap gap-1.5 my-2">
+                        {% for cat in sueno.categorias %}
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">{{ cat }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 text-xs leading-relaxed line-clamp-4">{{ sueno.descripcion }}</p>
+                </div>
+
+                <div class="flex justify-end gap-2 mt-4 border-t border-slate-200/60 dark:border-slate-800/60 pt-3">
+                    <button onclick="abrirModalEdicion(this)"
+                            data-id="{{ sueno.id }}" data-titulo="{{ sueno.titulo }}" data-fecha="{{ sueno.fecha }}"
+                            data-descripcion="{{ sueno.descripcion }}" data-categoria="{{ sueno.categorias[0] if sueno.categorias else '' }}"
+                            data-calidad="{{ sueno.calidad_sueno }}" data-destacado="{{ 'true' if es_destacado else 'false' }}"
+                            class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition">
+                        <i class="fa-regular fa-pen-to-square"></i> Editar
+                    </button>
+                    <a href="/eliminar/{{ sueno.id }}" onclick="return confirm('¿Borrar?')"
+                       class="text-slate-500 dark:text-slate-400 hover:text-red-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-red-500/10 transition">
+                        <i class="fa-regular fa-trash-can"></i> Borrar
+                    </a>
+                </div>
+            </article>
+            {% endif %}
+            {% endfor %}
+        </main>
+    </div>
+
+    <!-- MODAL REGISTRO -->
+    <div id="modal-registro" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-feather text-indigo-500"></i> Registrar Sueño</h3>
+                <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-slate-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form action="/registrar" method="POST" class="p-4 space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
+                    <input type="text" name="titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
+                        <input type="date" name="fecha" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
+                        <select name="categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                            <option value="Bonito">😊 Bonito</option>
+                            <option value="Lucido">✨ Lúcido</option>
+                            <option value="Pesadilla">👹 Pesadilla</option>
+                            <option value="Normal">☁️ Normal</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 al 5)</label>
+                    <input type="number" name="calidad_sueno" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
+                    <textarea name="descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="destacado" id="destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                    <label for="destacado" class="text-slate-600 dark:text-slate-300">Marcar como destacado ⭐</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
+                    <button type="button" onclick="document.getElementById('modal-registro').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDICIÓN -->
+    <div id="modal-edicion" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">Modificar Recuerdo</h3>
+                <button onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="text-slate-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-edicion" method="POST" class="p-4 space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
+                    <input type="text" name="titulo" id="edit-titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
+                        <input type="date" name="fecha" id="edit-fecha" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
+                        <select name="categoria" id="edit-categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                            <option value="Bonito">😊 Bonito</option>
+                            <option value="Lucido">✨ Lúcido</option>
+                            <option value="Pesadilla">👹 Pesadilla</option>
+                            <option value="Normal">☁️ Normal</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Calidad</label>
+                    <input type="number" name="calidad_sueno" id="edit-calidad" min="1" max="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
+                    <textarea name="descripcion" id="edit-descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="destacado" id="edit-destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                    <label for="edit-destacado" class="text-slate-600 dark:text-slate-300">Mantener destacado ⭐</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
+                    <button type="button" onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-xl shadow-lg">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOGICA SCRIPT DEL SISTEMA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('PWA: Service Worker activo'))
+                    .catch(err => console.error('PWA: Error', err));
+            });
+        }
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        function actualizarIconos() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            } else {
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+            }
+        }
+        actualizarIconos();
+
+        themeToggleBtn.addEventListener('click', function() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            actualizarIconos();
+        });
+
+        let deferredPrompt;
+        const btnInstalar = document.getElementById('btn-instalar');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (btnInstalar) {
+                btnInstalar.classList.remove('hidden');
+            }
+        });
+
+        if (btnInstalar) {
+            btnInstalar.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    btnInstalar.classList.add('hidden');
+                    deferredPrompt = null;
+                }
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            if (btnInstalar) {
+                btnInstalar.classList.add('hidden');
+            }
+            deferredPrompt = null;
+        });
+
+        function abrirModalEdicion(boton) {
+            const id = boton.getAttribute('data-id');
+            const titulo = boton.getAttribute('data-titulo');
+            const fecha = boton.getAttribute('data-fecha');
+            const descripcion = boton.getAttribute('data-descripcion');
+            const categoria = boton.getAttribute('data-categoria');
+            const calidad = boton.getAttribute('data-calidad');
+            const destacado = boton.getAttribute('data-destacado') === 'true';
+
+            document.getElementById('form-edicion').action = '/editar/' + id;
+            document.getElementById('edit-titulo').value = titulo;
+            document.getElementById('edit-fecha').value = fecha;
+            document.getElementById('edit-descripcion').value = descripcion;
+            document.getElementById('edit-calidad').value = calidad;
+            document.getElementById('edit-destacado').checked = destacado;
+            
+            if(categoria) {
+                document.getElementById('edit-categoria').value = categoria;
+            }
+            document.getElementById('modal-edicion').classList.remove('hidden');
+        }
+
+        {% if stats.total > 0 %}
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById('chartCategorias').getContext('2d');
+            
+            const bonitos = parseInt("{{ stats.bonitos }}") || 0;
+            const lucidos = parseInt("{{ stats.lucidos }}") || 0;
+            const pesadillas = parseInt("{{ stats.pesadillas }}") || 0;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bonitos', 'Lúcidos', 'Pesadillas'],
+                    datasets: [{
+                        data: [bonitos, lucidos, pesadillas],
+                        backgroundColor: ['#4ade80', '#fbbf24', '#f87171'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569',
+                                font: { size: 11, weight: 'bold' },
+                                boxWidth: 10
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        });
+        {% endif %}
+    </script>
+</body>
+</html>
