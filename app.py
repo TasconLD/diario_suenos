@@ -1,30 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, Response, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, Response, session
 import time
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import io
 import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# 🔌 CONFIGURACIÓN DE CONEXIÓN A POSTGRESQL (Para el entorno local de Docker)
-DB_CONFIG = {
-    "dbname": "diario_suenos",
-    "user": "usuario_diario",
-    "password": "clave_secreta_123",
-    "host": "localhost",
-    "port": "5432"
-}
-# Reemplaza tu configuración de DB_CONFIG u obtener_conexion por algo como esto:
+# Clave secreta para poder usar sesiones (cookies seguras de login)
+app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_dificil_de_adivinar_123')
+
+# 🔌 CONFIGURACIÓN DE CONEXIÓN A POSTGRESQL
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def obtener_conexion():
     if DATABASE_URL:
-        # En Render (Producción) usará la URL larga de Neon
         return psycopg2.connect(DATABASE_URL)
     else:
-        # En tu PC local (Desarrollo) usa los datos que tenías antes
-        # Cambia esto por tus datos locales reales si los necesitas
         return psycopg2.connect(
             dbname="tu_bd_local",
             user="postgres",
@@ -34,9 +27,19 @@ def obtener_conexion():
         )
 
 def inicializar_base_datos():
-    """Crea la tabla en PostgreSQL si no existe al arrancar la aplicación."""
+    """Crea las tablas en PostgreSQL si no existen al arrancar la aplicación."""
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
+            # 1. Crear tabla de usuarios primero
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id SERIAL PRIMARY KEY,
+                    usuario VARCHAR(50) UNIQUE NOT NULL,
+                    contrasena TEXT NOT NULL,
+                    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            # 2. Crear tabla de suenos e incluir la columna vinculada al usuario
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS suenos (
                     id BIGINT PRIMARY KEY,
@@ -45,7 +48,8 @@ def inicializar_base_datos():
                     fecha DATE NOT NULL,
                     calidad_sueno INTEGER DEFAULT 5,
                     destacado BOOLEAN DEFAULT FALSE,
-                    categorias TEXT[] -- Permite guardar listas nativas de categorías
+                    categorias TEXT[],
+                    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE
                 );
             """)
             conn.commit()
@@ -53,11 +57,10 @@ def inicializar_base_datos():
 # Inicializamos la base de datos automáticamente
 inicializar_base_datos()
 
-def obtener_estadisticas():
-    """Calcula estadísticas directamente en PostgreSQL para optimizar rendimiento y memoria RAM."""
+def obtener_estadisticas(usuario_id):
+    """Calcula estadísticas filtradas por el usuario logueado."""
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            # CORREGIDO: Se añade el filtro optimizado para contar la categoría 'bonito'
             cursor.execute("""
                 SELECT 
                     COUNT(*) as total,
@@ -65,37 +68,102 @@ def obtener_estadisticas():
                     COALESCE(COUNT(*) FILTER (WHERE 'lucido' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as lucidos,
                     COALESCE(COUNT(*) FILTER (WHERE 'bonito' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as bonitos,
                     COALESCE(ROUND(AVG(calidad_sueno), 1), 0.0) as promedio
-                FROM suenos;
-            """)
+                FROM suenos
+                WHERE usuario_id = %s;
+            """, (usuario_id,))
             return cursor.fetchone()
 
-def cargar_datos():
-    """Trae todos los registros de la base de datos ordenados cronológicamente."""
+def cargar_datos(usuario_id):
+    """Trae los registros filtrados por el usuario logueado."""
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""SELECT * FROM suenos ORDER BY fecha DESC, id DESC;""")
+            cursor.execute("""SELECT * FROM suenos WHERE usuario_id = %s ORDER BY fecha DESC, id DESC;""", (usuario_id,))
             suenos = cursor.fetchall()
-            
-            # Transformamos las fechas a formato texto 'YYYY-MM-DD' para total compatibilidad con tu HTML
             for s in suenos:
                 if s.get('fecha'):
                     s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
             return suenos
 
+# ==========================================
+# RUTAS DE AUTENTICACIÓN (LOGIN Y REGISTRO)
+# ==========================================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        nombre_usuario = request.form.get('usuario').strip().lower()
+        contrasena = request.form.get('contrasena')
+        
+        with obtener_conexion() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM usuarios WHERE usuario = %s;", (nombre_usuario,))
+                user = cursor.fetchone()
+                
+                if user and check_password_hash(user['contrasena'], contrasena):
+                    session['usuario_id'] = user['id']
+                    session['usuario_nombre'] = user['usuario']
+                    return redirect(url_for('index'))
+                else:
+                    return render_template('login.html', error="Usuario o contraseña incorrectos")
+                    
+    return render_template('login.html')
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        nombre_usuario = request.form.get('usuario').strip().lower()
+        contrasena = request.form.get('contrasena')
+        
+        if not nombre_usuario or not contrasena:
+            return render_template('registro.html', error="Todos los campos son obligatorios")
+            
+        contrasena_encriptada = generate_password_hash(contrasena)
+        
+        try:
+            with obtener_conexion() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "INSERT INTO usuarios (usuario, contrasena) VALUES (%s, %s) RETURNING id;",
+                        (nombre_usuario, contrasena_encriptada)
+                    )
+                    nuevo_id = cursor.fetchone()[0]
+                    conn.commit()
+                    
+                    # Loguear automáticamente después de registrarse
+                    session['usuario_id'] = nuevo_id
+                    session['usuario_nombre'] = nombre_usuario
+                    return redirect(url_for('index'))
+        except psycopg2.IntegrityError:
+            return render_template('registro.html', error="El nombre de usuario ya está en uso")
+            
+    return render_template('registro.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+# ==========================================
+# RUTAS DE LA APP (PROTEGIDAS POR USUARIO)
+# ==========================================
+
 @app.route('/')
 def index():
+    # Si no ha iniciado sesión, lo mandamos a loguearse
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
+    usuario_id = session['usuario_id']
     query = request.args.get('q', '').strip().lower()
     categoria_filtro = request.args.get('cat', '').strip().lower()
     
-    # Cargamos estadísticas globales optimizadas desde PostgreSQL
-    stats = obtener_estadisticas()
+    stats = obtener_estadisticas(usuario_id)
     
-    # --- CONSULTA FILTRADA A POSTGRESQL ---
-    condiciones = []
-    parametros = []
+    # --- CONSULTA FILTRADA AL USUARIO LOGUEADO ---
+    condiciones = ["usuario_id = %s"]
+    parametros = [usuario_id]
     sql_query = """SELECT * FROM suenos"""
     
-    # Filtro especial por botones de categorías
     if categoria_filtro:
         if categoria_filtro == 'destacado':
             condiciones.append("destacado = TRUE")
@@ -103,7 +171,6 @@ def index():
             condiciones.append("%s = ANY(SELECT LOWER(c) FROM unnest(categorias) c)")
             parametros.append(categoria_filtro)
             
-    # Filtro por buscador de palabras clave
     if query:
         condiciones.append("(titulo ILIKE %s OR descripcion ILIKE %s)")
         parametros.extend([f"%{query}%", f"%{query}%"])
@@ -127,20 +194,23 @@ def index():
         suenos=suenos_filtrados, 
         query_busqueda=query, 
         categoria_actual=categoria_filtro,
-        stats=stats
+        stats=stats,
+        usuario_nombre=session['usuario_nombre']
     )
 
 @app.route('/registrar', methods=['POST'])
 def registrar():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
     id_sueno = int(time.time() * 1000)
     titulo = request.form.get('titulo')
     fecha = request.form.get('fecha')
     descripcion = request.form.get('descripcion')
     
-    # Asegúrate de que esta línea esté limpia y bien indentada con 4 espacios
     categorias = request.form.getlist('categoria')
-    if not categorias or categorias == ['']:
-        categorias = ['General'] # Categoría por defecto si llega vacío
+    if not ... or categorias == ['']:
+        categorias = ['General']
         
     calidad_sueno = int(request.form.get('calidad_sueno', 5))
     destacado = 'destacado' in request.form
@@ -148,15 +218,18 @@ def registrar():
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO suenos (id, titulo, fecha, descripcion, categorias, calidad_sueno, destacado)
-                VALUES (%s, %s, %s, %s, %s, %s, %s);
-            """, (id_sueno, titulo, fecha, descripcion, categorias, calidad_sueno, destacado))
+                INSERT INTO suenos (id, titulo, fecha, descripcion, categorias, calidad_sueno, destacado, usuario_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+            """, (id_sueno, titulo, fecha, descripcion, categorias, calidad_sueno, destacado, session['usuario_id']))
             conn.commit()
     
     return redirect(url_for('index'))
 
 @app.route('/editar/<id_sueno>', methods=['POST'])
 def editar(id_sueno):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
     titulo = request.form.get('titulo')
     fecha = request.form.get('fecha')
     descripcion = request.form.get('descripcion')
@@ -170,33 +243,41 @@ def editar(id_sueno):
 
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
+            # Seguridad extra: Solo permite actualizar si el sueño pertenece al usuario actual
             cursor.execute("""
                 UPDATE suenos 
                 SET titulo = %s, fecha = %s, descripcion = %s, categorias = %s, calidad_sueno = %s, destacado = %s
-                WHERE id = %s;
-            """, (titulo, fecha, descripcion, categorias, calidad_sueno, destacado, int(id_sueno)))
+                WHERE id = %s AND usuario_id = %s;
+            """, (titulo, fecha, descripcion, categorias, calidad_sueno, destacado, int(id_sueno), session['usuario_id']))
             conn.commit()
             
     return redirect(url_for('index'))
 
 @app.route('/eliminar/<id_sueno>')
 def eliminar(id_sueno):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("""DELETE FROM suenos WHERE id = %s;""", (int(id_sueno),))
+            cursor.execute("""DELETE FROM suenos WHERE id = %s AND usuario_id = %s;""", (int(id_sueno), session['usuario_id']))
             conn.commit()
     
     return redirect(url_for('index'))
 
 @app.route('/exportar')
 def exportar():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
     from fpdf import FPDF
     from fpdf.enums import XPos, YPos
     import matplotlib
     matplotlib.use('Agg')  
     import matplotlib.pyplot as plt
     
-    suenos_actuales = cargar_datos()
+    # Cargar solo datos del usuario logueado
+    suenos_actuales = cargar_datos(session['usuario_id'])
     total = len(suenos_actuales)
     lucidos = 0
     pesadillas = 0
@@ -255,8 +336,7 @@ def exportar():
         def header(self):
             self.set_font("Helvetica", "B", 18)
             self.set_text_color(59, 130, 246)
-            self.cell(0, 10, "REPORTE: DIARIO DE SUEÑOS", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
-            
+            self.cell(0, 10, f"REPORTE DE: {session['usuario_nombre'].upper()}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
             self.set_font("Helvetica", "I", 10)
             self.set_text_color(100, 116, 139)
             self.cell(0, 5, "Historial completo de tu actividad onirica", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
@@ -346,14 +426,13 @@ def exportar():
     return Response(
         pdf_output,
         mimetype="application/pdf",
-        headers={"Content-disposition": "attachment; filename=Mi_Diario_de_Suenos.pdf"}
+        headers={"Content-disposition": f"attachment; filename=Diario_{session['usuario_nombre']}.pdf"}
     )
 
 @app.route('/sw.js')
 def serve_sw():
     static_dir = os.path.join(app.root_path, 'static')
     filepath = os.path.join(static_dir, 'sw.js')
-    
     if os.path.exists(filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()

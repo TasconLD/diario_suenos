@@ -32,7 +32,7 @@
 
     <!-- BOTÓN DE TEMA EN UNA ESQUINA FLOTANTE (SUPERIOR DERECHA) -->
     <div class="absolute top-4 right-4 z-40">
-        <button id="theme-toggle" class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition duration-150 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition duration-150 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer">
             <i id="theme-toggle-dark-icon" class="hidden fa-solid fa-moon text-sm md:text-base"></i>
             <i id="theme-toggle-light-icon" class="hidden fa-solid fa-sun text-sm md:text-base"></i>
         </button>
@@ -50,13 +50,21 @@
             </div>
             
             <div class="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
+                <!-- PANEL DE USUARIO LOGUEADO -->
+                <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-xs md:text-sm">
+                    <span class="text-slate-500 dark:text-slate-400">Hola, <strong class="text-slate-800 dark:text-slate-200 font-semibold">{{ usuario_nombre }}</strong></span>
+                    <a href="/logout" class="bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 px-2 py-1 rounded-lg transition-all font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-[10px]"></i> Salir
+                    </a>
+                </div>
+
                 <!-- BOTÓN INSTALAR APP RE-INTEGRADO -->
-                <button id="btn-instalar" class="hidden bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-900 font-bold text-xs md:text-sm px-3.5 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md">
+                <button id="btn-instalar" class="hidden bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-900 font-bold text-xs md:text-sm px-3.5 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md cursor-pointer">
                     <i class="fa-solid fa-download"></i> Instalar App
                 </button>
 
                 <button onclick="document.getElementById('modal-registro').classList.remove('hidden')" 
-                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md">
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md cursor-pointer">
                     <i class="fa-solid fa-plus text-[10px]"></i> Registrar Sueño
                 </button>
                 
@@ -187,7 +195,7 @@
                             data-id="{{ sueno.id }}" data-titulo="{{ sueno.titulo }}" data-fecha="{{ sueno.fecha }}"
                             data-descripcion="{{ sueno.descripcion }}" data-categoria="{{ sueno.categorias[0] if sueno.categorias else '' }}"
                             data-calidad="{{ sueno.calidad_sueno }}" data-destacado="{{ 'true' if es_destacado else 'false' }}"
-                            class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition">
+                            class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition cursor-pointer">
                         <i class="fa-regular fa-pen-to-square"></i> Editar
                     </button>
                     <a href="/eliminar/{{ sueno.id }}" onclick="return confirm('¿Borrar?')"
@@ -206,7 +214,7 @@
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
             <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-feather text-indigo-500"></i> Registrar Sueño</h3>
-                <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-slate-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form action="/registrar" method="POST" class="p-4 space-y-3 text-xs">
                 <div>
@@ -241,8 +249,8 @@
                     <label for="destacado" class="text-slate-600 dark:text-slate-300">Marcar como destacado ⭐</label>
                 </div>
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
-                    <button type="button" onclick="document.getElementById('modal-registro').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg">Guardar</button>
+                    <button type="button" onclick="document.getElementById('modal-registro').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer">Guardar</button>
                 </div>
             </form>
         </div>
@@ -253,7 +261,7 @@
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
             <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">Modificar Recuerdo</h3>
-                <button onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="text-slate-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="form-edicion" method="POST" class="p-4 space-y-3 text-xs">
                 <div>
@@ -288,8 +296,8 @@
                     <label for="edit-destacado" class="text-slate-600 dark:text-slate-300">Mantener destacado ⭐</label>
                 </div>
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
-                    <button type="button" onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-xl shadow-lg">Actualizar</button>
+                    <button type="button" onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-xl shadow-lg cursor-pointer">Actualizar</button>
                 </div>
             </form>
         </div>
