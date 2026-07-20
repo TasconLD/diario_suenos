@@ -124,7 +124,7 @@ def registrar():
     fecha = request.form.get('fecha')
     descripcion = request.form.get('descripcion')
     
-    # Usamos getlist para capturar múltiples categorías si el formulario las envía
+    # Asegúrate de que esta línea esté limpia y bien indentada con 4 espacios
     categorias = request.form.getlist('categoria')
     if not categorias or categorias == ['']:
         categorias = ['General'] # Categoría por defecto si llega vacío
