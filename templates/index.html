@@ -18,7 +18,7 @@
             <!-- PANEL DE USUARIO LOGUEADO -->
             <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-xs md:text-sm">
                 <span class="text-slate-500 dark:text-slate-400">Hola, <strong class="text-slate-800 dark:text-slate-200 font-semibold">{{ usuario_nombre }}</strong></span>
-                <a href="{{ url_for('logout') }}" class="bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 px-2 py-1 rounded-lg transition-all font-bold flex items-center gap-1">
+                <a href="{{ url_for('auth.logout') }}" class="bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 px-2 py-1 rounded-lg transition-all font-bold flex items-center gap-1">
                     <i class="fa-solid fa-arrow-right-from-bracket text-[10px]"></i> Salir
                 </a>
             </div>
@@ -33,7 +33,7 @@
                 <i class="fa-solid fa-plus text-[10px]"></i> Registrar Sueño
             </button>
             
-            <a href="{{ url_for('exportar') }}" 
+            <a href="{{ url_for('main.exportar') }}" 
                class="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-sm">
                 <i class="fa-solid fa-file-pdf text-red-500"></i> Exportar PDF
             </a>
@@ -98,13 +98,13 @@
     <!-- FILTROS Y BÚSQUEDA -->
     <section class="flex flex-col md:flex-row gap-3 justify-between items-center mb-6 bg-white dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="flex flex-wrap gap-1.5 w-full md:w-auto">
-            <a href="/" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Todos</a>
-            <a href="/?cat=destacado" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'destacado' %}bg-amber-500 text-slate-950 shadow-md border border-amber-400{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">⭐ Destacados</a>
-            <a href="/?cat=bonito" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'bonito' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">😊 Bonitos</a>
-            <a href="/?cat=lucido" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'lucido' %}bg-yellow-500 text-slate-900 shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">✨ Lúcidos</a>
-            <a href="/?cat=pesadilla" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'pesadilla' %}bg-red-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">👹 Pesadillas</a>
+            <a href="{{ url_for('main.index') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Todos</a>
+            <a href="{{ url_for('main.index', cat='destacado') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'destacado' %}bg-amber-500 text-slate-950 shadow-md border border-amber-400{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">⭐ Destacados</a>
+            <a href="{{ url_for('main.index', cat='bonito') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'bonito' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">😊 Bonitos</a>
+            <a href="{{ url_for('main.index', cat='lucido') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'lucido' %}bg-yellow-500 text-slate-900 shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">✨ Lúcidos</a>
+            <a href="{{ url_for('main.index', cat='pesadilla') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'pesadilla' %}bg-red-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">👹 Pesadillas</a>
         </div>
-        <form action="/" method="GET" class="relative w-full md:w-72">
+        <form action="{{ url_for('main.index') }}" method="GET" class="relative w-full md:w-72">
             {% if categoria_actual %}
                 <input type="hidden" name="cat" value="{{ categoria_actual }}">
             {% endif %}
@@ -164,7 +164,7 @@
                         class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition cursor-pointer">
                     <i class="fa-regular fa-pen-to-square"></i> Editar
                 </button>
-                <a href="/eliminar/{{ sueno.id }}" onclick="return confirm('¿Borrar?')"
+                <a href="{{ url_for('main.eliminar', id_sueno=sueno.id) }}" onclick="return confirm('¿Borrar?')"
                    class="text-slate-500 dark:text-slate-400 hover:text-red-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-red-500/10 transition">
                     <i class="fa-regular fa-trash-can"></i> Borrar
                 </a>
@@ -182,7 +182,7 @@
             <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-feather text-indigo-500"></i> Registrar Sueño</h3>
             <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="/registrar" method="POST" class="p-4 space-y-3 text-xs">
+        <form action="{{ url_for('main.registrar') }}" method="POST" class="p-4 space-y-3 text-xs">
             <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
                 <input type="text" name="titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
@@ -271,6 +271,31 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    function abrirModalEdicion(btn) {
+        const id = btn.getAttribute('data-id');
+        const titulo = btn.getAttribute('data-titulo');
+        const fecha = btn.getAttribute('data-fecha');
+        const descripcion = btn.getAttribute('data-descripcion');
+        const categoria = btn.getAttribute('data-categoria');
+        const calidad = btn.getAttribute('data-calidad');
+        const destacado = btn.getAttribute('data-destacado') === 'true';
+
+        // Asigna dinámicamente la ruta de edición con id_sueno
+        const form = document.getElementById('form-edicion');
+        form.action = `/editar/${id}`;
+
+        document.getElementById('edit-titulo').value = titulo;
+        document.getElementById('edit-fecha').value = fecha;
+        document.getElementById('edit-descripcion').value = descripcion;
+        document.getElementById('edit-categoria').value = categoria;
+        document.getElementById('edit-calidad').value = calidad;
+        document.getElementById('edit-destacado').checked = destacado;
+
+        document.getElementById('modal-edicion').classList.remove('hidden');
+    }
+</script>
+
 {% if stats.total > 0 %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
