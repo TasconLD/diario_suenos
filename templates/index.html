@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diario de Sueños</title>
+    <title>Sueños Lucidos</title>
     
     <!-- Meta etiquetas PWA Estándar Modernas -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -58,7 +58,7 @@
                     </a>
                 </div>
 
-                <!-- BOTÓN INSTALAR APP RE-INTEGRADO -->
+                <!-- BOTÓN INSTALAR APP -->
                 <button id="btn-instalar" class="hidden bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-900 font-bold text-xs md:text-sm px-3.5 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md cursor-pointer">
                     <i class="fa-solid fa-download"></i> Instalar App
                 </button>
@@ -303,13 +303,16 @@
         </div>
     </div>
 
-    <!-- LOGICA SCRIPT DEL SISTEMA -->
+    <!-- SCRIPT PRINCIPAL -->
     <script>
-        // 1. Registro del Service Worker con ruta correcta (/static/sw.js)
+        // 1. Service Worker & PWA Logica
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/static/sw.js')
-                    .then(reg => console.log('PWA: Service Worker activo en', reg.scope))
+                    .then(reg => {
+                        console.log('PWA: Service Worker activo en', reg.scope);
+                        reg.update(); // Forzar actualización de cache
+                    })
                     .catch(err => console.error('PWA: Error al registrar SW', err));
             });
         }
@@ -341,18 +344,13 @@
             actualizarIconos();
         });
 
-        // 3. Lógica del Botón de Instalación PWA
+        // 3. Captura y despliegue del Botón de Instalación
         let deferredPrompt;
         const btnInstalar = document.getElementById('btn-instalar');
-
-        // Verificar si la app ya se ejecuta instalada (modo standalone)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-        if (isStandalone && btnInstalar) {
-            btnInstalar.classList.add('hidden');
-        }
-
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('Evento beforeinstallprompt activado.');
             e.preventDefault();
             deferredPrompt = e;
             if (btnInstalar && !isStandalone) {
@@ -365,11 +363,13 @@
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
                     const { outcome } = await deferredPrompt.userChoice;
-                    console.log('Instalación:', outcome);
+                    console.log('PWA Outcome:', outcome);
                     if (outcome === 'accepted') {
                         btnInstalar.classList.add('hidden');
                     }
                     deferredPrompt = null;
+                } else {
+                    alert('Para instalar en iPhone/iOS: Toca el icono de Compartir y luego "Añadir a la pantalla de inicio".');
                 }
             });
         }
