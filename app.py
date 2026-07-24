@@ -91,8 +91,9 @@ def cargar_datos(usuario_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        nombre_usuario = request.form.get('usuario') or ')'.strip().lower()
-        contrasena = request.form.get('contrasena')
+        # FIX: Expresión limpia para evitar None / errores de sintaxis
+        nombre_usuario = (request.form.get('usuario') or '').strip().lower()
+        contrasena = request.form.get('contrasena') or ''
         
         if not nombre_usuario or not contrasena:
             return render_template('login.html', error="Por favor completa todos los campos")
@@ -114,8 +115,8 @@ def login():
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
-        nombre_usuario = request.form.get('usuario').strip().lower()
-        contrasena = request.form.get('contrasena')
+        nombre_usuario = (request.form.get('usuario') or '').strip().lower()
+        contrasena = request.form.get('contrasena') or ''
         
         if not nombre_usuario or not contrasena:
             return render_template('registro.html', error="Todos los campos son obligatorios")
@@ -152,7 +153,6 @@ def logout():
 
 @app.route('/')
 def index():
-    # Si no ha iniciado sesión, lo mandamos a loguearse
     if 'usuario_id' not in session:
         return redirect(url_for('login'))
         
@@ -162,7 +162,6 @@ def index():
     
     stats = obtener_estadisticas(usuario_id)
     
-    # --- CONSULTA FILTRADA AL USUARIO LOGUEADO ---
     condiciones = ["usuario_id = %s"]
     parametros = [usuario_id]
     sql_query = """SELECT * FROM suenos"""
@@ -212,7 +211,8 @@ def registrar():
     descripcion = request.form.get('descripcion')
     
     categorias = request.form.getlist('categoria')
-    if not ... or categorias == ['']:
+    # FIX: Corregido el condicional
+    if not categorias or categorias == ['']:
         categorias = ['General']
         
     calidad_sueno = int(request.form.get('calidad_sueno', 5))
@@ -246,7 +246,6 @@ def editar(id_sueno):
 
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
-            # Seguridad extra: Solo permite actualizar si el sueño pertenece al usuario actual
             cursor.execute("""
                 UPDATE suenos 
                 SET titulo = %s, fecha = %s, descripcion = %s, categorias = %s, calidad_sueno = %s, destacado = %s
@@ -279,7 +278,6 @@ def exportar():
     matplotlib.use('Agg')  
     import matplotlib.pyplot as plt
     
-    # Cargar solo datos del usuario logueado
     suenos_actuales = cargar_datos(session['usuario_id'])
     total = len(suenos_actuales)
     lucidos = 0
