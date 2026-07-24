@@ -162,7 +162,25 @@
                         <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">{{ cat }}</span>
                     {% endfor %}
                 </div>
-                <p class="text-slate-600 dark:text-slate-300 text-xs leading-relaxed line-clamp-4">{{ sueno.descripcion }}</p>
+
+                <!-- RELATO CON DESPLIEGUE "VER MÁS" -->
+                <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <div id="relato-corto-{{ sueno.id }}" class="line-clamp-3">
+                        {{ sueno.descripcion }}
+                    </div>
+                    
+                    <div id="relato-completo-{{ sueno.id }}" class="hidden whitespace-pre-line">
+                        {{ sueno.descripcion }}
+                    </div>
+
+                    {% if sueno.descripcion|length > 180 %}
+                    <button onclick="toggleRelato('{{ sueno.id }}')" 
+                            id="btn-relato-{{ sueno.id }}"
+                            class="text-indigo-600 dark:text-indigo-400 font-semibold text-[11px] mt-1.5 hover:underline cursor-pointer flex items-center gap-1">
+                        <span>Ver más</span> <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                    </button>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="flex justify-end gap-2 mt-4 border-t border-slate-200/60 dark:border-slate-800/60 pt-3">
@@ -311,6 +329,22 @@
 
 {% block scripts %}
 <script>
+    function toggleRelato(id) {
+        const corto = document.getElementById(`relato-corto-${id}`);
+        const completo = document.getElementById(`relato-completo-${id}`);
+        const btn = document.getElementById(`btn-relato-${id}`);
+
+        if (completo.classList.contains('hidden')) {
+            corto.classList.add('hidden');
+            completo.classList.remove('hidden');
+            btn.innerHTML = '<span>Ver menos</span> <i class="fa-solid fa-chevron-up text-[9px]"></i>';
+        } else {
+            corto.classList.remove('hidden');
+            completo.classList.add('hidden');
+            btn.innerHTML = '<span>Ver más</span> <i class="fa-solid fa-chevron-down text-[9px]"></i>';
+        }
+    }
+
     function toggleFecha(inputId, isChecked) {
         const fechaInput = document.getElementById(inputId);
         if (isChecked) {
