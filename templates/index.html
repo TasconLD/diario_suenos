@@ -98,7 +98,8 @@
     <!-- FILTROS Y BÚSQUEDA -->
     <section class="flex flex-col md:flex-row gap-3 justify-between items-center mb-6 bg-white dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="flex flex-wrap gap-1.5 w-full md:w-auto">
-            <a href="{{ url_for('main.index') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Todos</a>
+            <a href="{{ url_for('main.index') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Línea de Tiempo</a>
+            <a href="{{ url_for('main.index', cat='sin_fecha') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'sin_fecha' %}bg-purple-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">📜 Recuerdos</a>
             <a href="{{ url_for('main.index', cat='destacado') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'destacado' %}bg-amber-500 text-slate-950 shadow-md border border-amber-400{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">⭐ Destacados</a>
             <a href="{{ url_for('main.index', cat='bonito') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'bonito' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">😊 Bonitos</a>
             <a href="{{ url_for('main.index', cat='lucido') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'lucido' %}bg-yellow-500 text-slate-900 shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">✨ Lúcidos</a>
@@ -116,10 +117,7 @@
     <!-- LÍNEA DE TIEMPO PRINCIPAL -->
     <main class="relative border-l-2 border-slate-200 dark:border-slate-800 ml-3 md:ml-6 pl-5 md:pl-8 space-y-6">
         {% for sueno in suenos %}
-        
         {% set es_destacado = sueno.destacado or sueno.destacado == 1 or sueno.destacado|string|lower == 'true' %}
-        
-        {% if not categoria_actual or (categoria_actual == 'destacado' and es_destacado) or (categoria_actual != 'destacado' and categoria_actual in sueno.categorias|map('lower')) %}
         
         <article class="relative border rounded-xl p-4 transition duration-200 flex flex-col justify-between shadow-sm
             {% if 'lucido' in sueno.categorias|map('lower') %}bg-yellow-50/40 border-yellow-200 dark:bg-yellow-950/10 dark:border-yellow-900/40
@@ -135,7 +133,18 @@
 
             <div>
                 <div class="flex justify-between items-start gap-2 mb-1">
-                    <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar"></i> {{ sueno.fecha }}</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        {% if sueno.fecha %}
+                            <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar"></i> {{ sueno.fecha }}</span>
+                        {% else %}
+                            <span class="text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-clock-rotate-left text-[9px]"></i> Recuerdo Antiguo</span>
+                        {% endif %}
+
+                        {% if sueno.hora_formateada %}
+                            <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-clock"></i> {{ sueno.hora_formateada }}</span>
+                        {% endif %}
+                    </div>
+
                     <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                         Calidad: {{ sueno.calidad_sueno }}/5
                     </span>
@@ -158,7 +167,8 @@
 
             <div class="flex justify-end gap-2 mt-4 border-t border-slate-200/60 dark:border-slate-800/60 pt-3">
                 <button onclick="abrirModalEdicion(this)"
-                        data-id="{{ sueno.id }}" data-titulo="{{ sueno.titulo }}" data-fecha="{{ sueno.fecha }}"
+                        data-id="{{ sueno.id }}" data-titulo="{{ sueno.titulo }}" data-fecha="{{ sueno.fecha if sueno.fecha else '' }}"
+                        data-hora="{{ sueno.hora if sueno.hora else '' }}"
                         data-descripcion="{{ sueno.descripcion }}" data-categoria="{{ sueno.categorias[0] if sueno.categorias else '' }}"
                         data-calidad="{{ sueno.calidad_sueno }}" data-destacado="{{ 'true' if es_destacado else 'false' }}"
                         class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition cursor-pointer">
@@ -170,7 +180,6 @@
                 </a>
             </div>
         </article>
-        {% endif %}
         {% endfor %}
     </main>
 </div>
@@ -187,11 +196,24 @@
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
                 <input type="text" name="titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
             </div>
+            
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
-                    <input type="date" name="fecha" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <input type="date" name="fecha" id="reg-fecha" value="{{ fecha_hoy }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <input type="checkbox" name="sin_fecha" id="reg-sin-fecha" onchange="toggleFecha('reg-fecha', this.checked)" class="rounded text-indigo-600 w-3.5 h-3.5 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                        <label for="reg-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">Sin fecha (Recuerdo)</label>
+                    </div>
                 </div>
+
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hora (Opcional)</label>
+                    <input type="time" name="hora" id="reg-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
                     <select name="categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
@@ -201,19 +223,22 @@
                         <option value="Normal">☁️ Normal</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 al 5)</label>
+                    <input type="number" name="calidad_sueno" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
             </div>
-            <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 al 5)</label>
-                <input type="number" name="calidad_sueno" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
-            </div>
+
             <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
                 <textarea name="descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
             </div>
+            
             <div class="flex items-center gap-2">
                 <input type="checkbox" name="destacado" id="destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                 <label for="destacado" class="text-slate-600 dark:text-slate-300">Marcar como destacado ⭐</label>
             </div>
+            
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
                 <button type="button" onclick="document.getElementById('modal-registro').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
                 <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer">Guardar</button>
@@ -234,11 +259,24 @@
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
                 <input type="text" name="titulo" id="edit-titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
             </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
-                    <input type="date" name="fecha" id="edit-fecha" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <input type="date" name="fecha" id="edit-fecha" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <input type="checkbox" name="sin_fecha" id="edit-sin-fecha" onchange="toggleFecha('edit-fecha', this.checked)" class="rounded text-indigo-600 w-3.5 h-3.5 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                        <label for="edit-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">Sin fecha (Recuerdo)</label>
+                    </div>
                 </div>
+
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hora (Opcional)</label>
+                    <input type="time" name="hora" id="edit-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
                     <select name="categoria" id="edit-categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
@@ -248,11 +286,12 @@
                         <option value="Normal">☁️ Normal</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Calidad</label>
+                    <input type="number" name="calidad_sueno" id="edit-calidad" min="1" max="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
             </div>
-            <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Calidad</label>
-                <input type="number" name="calidad_sueno" id="edit-calidad" min="1" max="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
-            </div>
+
             <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
                 <textarea name="descripcion" id="edit-descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
@@ -272,25 +311,54 @@
 
 {% block scripts %}
 <script>
+    function toggleFecha(inputId, isChecked) {
+        const fechaInput = document.getElementById(inputId);
+        if (isChecked) {
+            fechaInput.value = '';
+            fechaInput.removeAttribute('required');
+            fechaInput.disabled = true;
+            fechaInput.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            fechaInput.disabled = false;
+            if (inputId === 'reg-fecha') {
+                fechaInput.value = "{{ fecha_hoy }}";
+                fechaInput.setAttribute('required', 'required');
+            }
+            fechaInput.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
     function abrirModalEdicion(btn) {
         const id = btn.getAttribute('data-id');
         const titulo = btn.getAttribute('data-titulo');
         const fecha = btn.getAttribute('data-fecha');
+        const hora = btn.getAttribute('data-hora');
         const descripcion = btn.getAttribute('data-descripcion');
         const categoria = btn.getAttribute('data-categoria');
         const calidad = btn.getAttribute('data-calidad');
         const destacado = btn.getAttribute('data-destacado') === 'true';
 
-        // Asigna dinámicamente la ruta de edición con id_sueno
         const form = document.getElementById('form-edicion');
         form.action = `/editar/${id}`;
 
         document.getElementById('edit-titulo').value = titulo;
-        document.getElementById('edit-fecha').value = fecha;
+        document.getElementById('edit-hora').value = hora;
         document.getElementById('edit-descripcion').value = descripcion;
         document.getElementById('edit-categoria').value = categoria;
         document.getElementById('edit-calidad').value = calidad;
         document.getElementById('edit-destacado').checked = destacado;
+
+        const chkSinFecha = document.getElementById('edit-sin-fecha');
+        const editFechaInput = document.getElementById('edit-fecha');
+
+        if (!fecha || fecha === 'None' || fecha === '') {
+            chkSinFecha.checked = true;
+            toggleFecha('edit-fecha', true);
+        } else {
+            chkSinFecha.checked = false;
+            toggleFecha('edit-fecha', false);
+            editFechaInput.value = fecha;
+        }
 
         document.getElementById('modal-edicion').classList.remove('hidden');
     }

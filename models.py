@@ -26,4 +26,8 @@ def cargar_datos(usuario_id):
             for s in suenos:
                 if s.get('fecha'):
                     s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
+                if s.get('hora'):
+                    s['hora_formateada'] = s['hora'].strftime('%I:%M %p')
+                else:
+                    s['hora_formateada'] = None
             return suenos

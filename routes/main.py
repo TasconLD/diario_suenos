@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, date
 from flask import Blueprint, render_template, request, redirect, url_for, Response, session
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
@@ -17,17 +18,25 @@ def index():
     categoria_filtro = request.args.get('cat', '').strip().lower()
     
     stats = obtener_estadisticas(usuario_id)
+    fecha_hoy = date.today().strftime('%Y-%m-%d')
     
     condiciones = ["usuario_id = %s"]
     parametros = [usuario_id]
     sql_query = """SELECT * FROM suenos"""
     
+    # Manejo de filtros
     if categoria_filtro:
         if categoria_filtro == 'destacado':
             condiciones.append("destacado = TRUE")
+        elif categoria_filtro == 'sin_fecha':
+            # Solo muestra los que NO tienen fecha
+            condiciones.append("fecha IS NULL")
         else:
             condiciones.append("%s = ANY(SELECT LOWER(c) FROM unnest(categorias) c)")
             parametros.append(categoria_filtro)
+    else:
+        # SI NO HAY FILTRO ACTIVO: Ocultamos los que no tienen fecha para mantener la línea de tiempo limpia
+        condiciones.append("fecha IS NOT NULL")
             
     if query:
         condiciones.append("(titulo ILIKE %s OR descripcion ILIKE %s)")
@@ -36,7 +45,7 @@ def index():
     if condiciones:
         sql_query += " WHERE " + " AND ".join(condiciones)
         
-    sql_query += " ORDER BY fecha DESC, id DESC;"
+    sql_query += " ORDER BY fecha DESC NULLS LAST, id DESC;"
     
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -46,6 +55,15 @@ def index():
             for s in suenos_filtrados:
                 if s.get('fecha'):
                     s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
+                else:
+                    s['fecha'] = None
+
+                if s.get('hora'):
+                    s['hora_formateada'] = s['hora'].strftime('%I:%M %p')
+                    s['hora'] = s['hora'].strftime('%H:%M')
+                else:
+                    s['hora_formateada'] = None
+                    s['hora'] = ''
                     
     return render_template(
         'index.html', 
@@ -53,7 +71,8 @@ def index():
         query_busqueda=query, 
         categoria_actual=categoria_filtro,
         stats=stats,
-        usuario_nombre=session['usuario_nombre']
+        usuario_nombre=session['usuario_nombre'],
+        fecha_hoy=fecha_hoy
     )
 
 @main_bp.route('/registrar', methods=['POST'])
@@ -63,7 +82,17 @@ def registrar():
         
     id_sueno = int(time.time() * 1000)
     titulo = request.form.get('titulo')
-    fecha = request.form.get('fecha')
+    
+    sin_fecha = 'sin_fecha' in request.form
+    fecha = None if sin_fecha else request.form.get('fecha')
+    if fecha == '':
+        fecha = None
+        
+    hora = request.form.get('hora')
+    # Si no ingresó hora manualmente, asignamos automáticamente la hora actual del servidor
+    if not hora or hora.strip() == '':
+        hora = datetime.now().time().strftime('%H:%M:%S')
+
     descripcion = request.form.get('descripcion')
     
     categorias = request.form.getlist('categoria')
@@ -76,9 +105,9 @@ def registrar():
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO suenos (id, titulo, fecha, descripcion, categorias, calidad_sueno, destacado, usuario_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
-            """, (id_sueno, titulo, fecha, descripcion, categorias, calidad_sueno, destacado, session['usuario_id']))
+                INSERT INTO suenos (id, titulo, fecha, hora, descripcion, categorias, calidad_sueno, destacado, usuario_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+            """, (id_sueno, titulo, fecha, hora, descripcion, categorias, calidad_sueno, destacado, session['usuario_id']))
             conn.commit()
     
     return redirect(url_for('main.index'))
@@ -89,7 +118,16 @@ def editar(id_sueno):
         return redirect(url_for('auth.login'))
         
     titulo = request.form.get('titulo')
-    fecha = request.form.get('fecha')
+    
+    sin_fecha = 'sin_fecha' in request.form
+    fecha = None if sin_fecha else request.form.get('fecha')
+    if fecha == '':
+        fecha = None
+        
+    hora = request.form.get('hora')
+    if not hora or hora.strip() == '':
+        hora = None
+
     descripcion = request.form.get('descripcion')
     
     categorias = request.form.getlist('categoria')
@@ -103,9 +141,9 @@ def editar(id_sueno):
         with conn.cursor() as cursor:
             cursor.execute("""
                 UPDATE suenos 
-                SET titulo = %s, fecha = %s, descripcion = %s, categorias = %s, calidad_sueno = %s, destacado = %s
+                SET titulo = %s, fecha = %s, hora = %s, descripcion = %s, categorias = %s, calidad_sueno = %s, destacado = %s
                 WHERE id = %s AND usuario_id = %s;
-            """, (titulo, fecha, descripcion, categorias, calidad_sueno, destacado, int(id_sueno), session['usuario_id']))
+            """, (titulo, fecha, hora, descripcion, categorias, calidad_sueno, destacado, int(id_sueno), session['usuario_id']))
             conn.commit()
             
     return redirect(url_for('main.index'))
