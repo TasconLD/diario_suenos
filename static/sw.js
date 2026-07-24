@@ -1,7 +1,7 @@
-const CACHE_NAME = 'entrenador-onirico-v3';
+const CACHE_NAME = 'entrenador-onirico-v4';
 const assets = [
   '/',
-  '/static/manifest.json', // Cambia a /manifest.json si no está en /static
+  '/static/manifest.json',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js'
 ];
