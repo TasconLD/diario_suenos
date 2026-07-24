@@ -91,8 +91,11 @@ def cargar_datos(usuario_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        nombre_usuario = request.form.get('usuario').strip().lower()
+        nombre_usuario = request.form.get('usuario') or ')'.strip().lower()
         contrasena = request.form.get('contrasena')
+        
+        if not nombre_usuario or not contrasena:
+            return render_template('login.html', error="Por favor completa todos los campos")
         
         with obtener_conexion() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
