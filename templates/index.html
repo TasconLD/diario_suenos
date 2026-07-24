@@ -75,6 +75,44 @@
                 <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.pesadillas }}</p>
             </div>
         </div>
+
+        <!-- Métricas de Emociones -->
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 my-4">
+    <a href="{{ url_for('main.index', emocion='feliz') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'feliz' %}ring-2 ring-emerald-500{% endif %}">
+        <span class="text-xl">😊</span>
+        <span class="text-xs text-slate-400 mt-1">Feliz</span>
+        <span class="text-lg font-bold text-emerald-400">{{ stats.emocion_feliz }}</span>
+    </a>
+
+    <a href="{{ url_for('main.index', emocion='miedo') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'miedo' %}ring-2 ring-red-500{% endif %}">
+        <span class="text-xl">😨</span>
+        <span class="text-xs text-slate-400 mt-1">Miedo</span>
+        <span class="text-lg font-bold text-red-400">{{ stats.emocion_miedo }}</span>
+    </a>
+
+    <a href="{{ url_for('main.index', emocion='triste') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'triste' %}ring-2 ring-blue-500{% endif %}">
+        <span class="text-xl">😢</span>
+        <span class="text-xs text-slate-400 mt-1">Triste</span>
+        <span class="text-lg font-bold text-blue-400">{{ stats.emocion_triste }}</span>
+    </a>
+
+    <a href="{{ url_for('main.index', emocion='ansioso') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'ansioso' %}ring-2 ring-amber-500{% endif %}">
+        <span class="text-xl">😰</span>
+        <span class="text-xs text-slate-400 mt-1">Ansioso</span>
+        <span class="text-lg font-bold text-amber-400">{{ stats.emocion_ansioso }}</span>
+    </a>
+
+    <a href="{{ url_for('main.index', emocion='neutro') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'neutro' %}ring-2 ring-slate-400{% endif %}">
+        <span class="text-xl">😐</span>
+        <span class="text-xs text-slate-400 mt-1">Neutro</span>
+        <span class="text-lg font-bold text-slate-300">{{ stats.emocion_neutro }}</span>
+    </a>
+</div>
     </section>
 
     <!-- SECCIÓN DE GRÁFICOS -->
@@ -98,19 +136,34 @@
     <!-- FILTROS Y BÚSQUEDA -->
     <section class="flex flex-col md:flex-row gap-3 justify-between items-center mb-6 bg-white dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="flex flex-wrap gap-1.5 w-full md:w-auto">
-            <a href="{{ url_for('main.index') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Línea de Tiempo</a>
+            <a href="{{ url_for('main.index') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual and not emocion_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Línea de Tiempo</a>
             <a href="{{ url_for('main.index', cat='sin_fecha') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'sin_fecha' %}bg-purple-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">📜 Recuerdos</a>
             <a href="{{ url_for('main.index', cat='destacado') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'destacado' %}bg-amber-500 text-slate-950 shadow-md border border-amber-400{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">⭐ Destacados</a>
             <a href="{{ url_for('main.index', cat='bonito') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'bonito' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">😊 Bonitos</a>
             <a href="{{ url_for('main.index', cat='lucido') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'lucido' %}bg-yellow-500 text-slate-900 shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">✨ Lúcidos</a>
             <a href="{{ url_for('main.index', cat='pesadilla') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'pesadilla' %}bg-red-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">👹 Pesadillas</a>
         </div>
-        <form action="{{ url_for('main.index') }}" method="GET" class="relative w-full md:w-72">
+        
+        <form action="{{ url_for('main.index') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
             {% if categoria_actual %}
                 <input type="hidden" name="cat" value="{{ categoria_actual }}">
             {% endif %}
-            <input type="text" name="q" value="{{ query_busqueda }}" placeholder="Buscar..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            
+            <!-- FILTRO POR EMOCIÓN -->
+            <select name="emocion" onchange="this.form.submit()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm cursor-pointer">
+                <option value="">Todas las emociones</option>
+                <option value="Alegria" {% if emocion_actual == 'Alegria' %}selected{% endif %}>😊 Alegría</option>
+                <option value="Miedo" {% if emocion_actual == 'Miedo' %}selected{% endif %}>😱 Miedo</option>
+                <option value="Tristeza" {% if emocion_actual == 'Tristeza' %}selected{% endif %}>😢 Tristeza</option>
+                <option value="Paz" {% if emocion_actual == 'Paz' %}selected{% endif %}>😌 Paz</option>
+                <option value="Confusion" {% if emocion_actual == 'Confusion' %}selected{% endif %}>🤔 Confusión</option>
+                <option value="Asombro" {% if emocion_actual == 'Asombro' %}selected{% endif %}>😲 Asombro</option>
+            </select>
+
+            <div class="relative w-full md:w-56">
+                <input type="text" name="q" value="{{ query_busqueda }}" placeholder="Buscar..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            </div>
         </form>
     </section>
 
@@ -157,10 +210,23 @@
                     {% endif %}
                 </h3>
                 
-                <div class="flex flex-wrap gap-1.5 my-2">
+                <div class="flex flex-wrap items-center gap-1.5 my-2">
                     {% for cat in sueno.categorias %}
                         <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">{{ cat }}</span>
                     {% endfor %}
+
+                    <!-- BADGE DE EMOCIÓN -->
+                    {% if sueno.emocion %}
+                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
+                            {% if sueno.emocion == 'Alegria' %}😊 Alegría
+                            {% elif sueno.emocion == 'Miedo' %}😱 Miedo
+                            {% elif sueno.emocion == 'Tristeza' %}😢 Tristeza
+                            {% elif sueno.emocion == 'Paz' %}😌 Paz
+                            {% elif sueno.emocion == 'Confusion' %}🤔 Confusión
+                            {% elif sueno.emocion == 'Asombro' %}😲 Asombro
+                            {% else %}🎭 {{ sueno.emocion }}{% endif %}
+                        </span>
+                    {% endif %}
                 </div>
 
                 <!-- RELATO CON DESPLIEGUE "VER MÁS" -->
@@ -188,6 +254,7 @@
                         data-id="{{ sueno.id }}" data-titulo="{{ sueno.titulo }}" data-fecha="{{ sueno.fecha if sueno.fecha else '' }}"
                         data-hora="{{ sueno.hora if sueno.hora else '' }}"
                         data-descripcion="{{ sueno.descripcion }}" data-categoria="{{ sueno.categorias[0] if sueno.categorias else '' }}"
+                        data-emocion="{{ sueno.emocion if sueno.emocion else '' }}"
                         data-calidad="{{ sueno.calidad_sueno }}" data-destacado="{{ 'true' if es_destacado else 'false' }}"
                         class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition cursor-pointer">
                     <i class="fa-regular fa-pen-to-square"></i> Editar
@@ -231,7 +298,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-3 gap-3">
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
                     <select name="categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
@@ -242,7 +309,19 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 al 5)</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Emoción</label>
+                    <select name="emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                        <option value="">Ninguna</option>
+                        <option value="Alegria">😊 Alegría</option>
+                        <option value="Miedo">😱 Miedo</option>
+                        <option value="Tristeza">😢 Tristeza</option>
+                        <option value="Paz">😌 Paz</option>
+                        <option value="Confusion">🤔 Confusión</option>
+                        <option value="Asombro">😲 Asombro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 a 5)</label>
                     <input type="number" name="calidad_sueno" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
             </div>
@@ -294,7 +373,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-3 gap-3">
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
                     <select name="categoria" id="edit-categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
@@ -302,6 +381,18 @@
                         <option value="Lucido">✨ Lúcido</option>
                         <option value="Pesadilla">👹 Pesadilla</option>
                         <option value="Normal">☁️ Normal</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Emoción</label>
+                    <select name="emocion" id="edit-emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                        <option value="">Ninguna</option>
+                        <option value="Alegria">😊 Alegría</option>
+                        <option value="Miedo">😱 Miedo</option>
+                        <option value="Tristeza">😢 Tristeza</option>
+                        <option value="Paz">😌 Paz</option>
+                        <option value="Confusion">🤔 Confusión</option>
+                        <option value="Asombro">😲 Asombro</option>
                     </select>
                 </div>
                 <div>
@@ -369,6 +460,7 @@
         const hora = btn.getAttribute('data-hora');
         const descripcion = btn.getAttribute('data-descripcion');
         const categoria = btn.getAttribute('data-categoria');
+        const emocion = btn.getAttribute('data-emocion');
         const calidad = btn.getAttribute('data-calidad');
         const destacado = btn.getAttribute('data-destacado') === 'true';
 
@@ -379,6 +471,7 @@
         document.getElementById('edit-hora').value = hora;
         document.getElementById('edit-descripcion').value = descripcion;
         document.getElementById('edit-categoria').value = categoria;
+        document.getElementById('edit-emocion').value = emocion;
         document.getElementById('edit-calidad').value = calidad;
         document.getElementById('edit-destacado').checked = destacado;
 

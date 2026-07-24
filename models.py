@@ -2,7 +2,7 @@ from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 
 def obtener_estadisticas(usuario_id):
-    """Calcula estadísticas filtradas por el usuario logueado."""
+    """Calcula estadísticas filtradas por el usuario logueado, incluyendo emociones."""
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
@@ -11,7 +11,13 @@ def obtener_estadisticas(usuario_id):
                     COALESCE(COUNT(*) FILTER (WHERE 'pesadilla' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as pesadillas,
                     COALESCE(COUNT(*) FILTER (WHERE 'lucido' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as lucidos,
                     COALESCE(COUNT(*) FILTER (WHERE 'bonito' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as bonitos,
-                    COALESCE(ROUND(AVG(calidad_sueno), 1), 0.0) as promedio
+                    COALESCE(ROUND(AVG(calidad_sueno), 1), 0.0) as promedio,
+                    -- Conteos por emoción:
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'feliz'), 0) as emocion_feliz,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'triste'), 0) as emocion_triste,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'miedo'), 0) as emocion_miedo,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'ansioso'), 0) as emocion_ansioso,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'neutro'), 0) as emocion_neutro
                 FROM suenos
                 WHERE usuario_id = %s;
             """, (usuario_id,))
@@ -21,7 +27,11 @@ def cargar_datos(usuario_id):
     """Trae los registros filtrados por el usuario logueado."""
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""SELECT * FROM suenos WHERE usuario_id = %s ORDER BY fecha DESC, id DESC;""", (usuario_id,))
+            cursor.execute("""
+                SELECT * FROM suenos 
+                WHERE usuario_id = %s 
+                ORDER BY fecha DESC, id DESC;
+            """, (usuario_id,))
             suenos = cursor.fetchall()
             for s in suenos:
                 if s.get('fecha'):

@@ -16,6 +16,7 @@ def index():
     usuario_id = session['usuario_id']
     query = request.args.get('q', '').strip().lower()
     categoria_filtro = request.args.get('cat', '').strip().lower()
+    emocion_filtro = request.args.get('emocion', '').strip() # <-- CAPTURA FILTRO EMOCIÓN
     
     stats = obtener_estadisticas(usuario_id)
     fecha_hoy = date.today().strftime('%Y-%m-%d')
@@ -24,7 +25,7 @@ def index():
     parametros = [usuario_id]
     sql_query = """SELECT * FROM suenos"""
     
-    # Manejo de filtros
+    # Manejo de filtros por categoría
     if categoria_filtro:
         if categoria_filtro == 'destacado':
             condiciones.append("destacado = TRUE")
@@ -37,7 +38,13 @@ def index():
     else:
         # SI NO HAY FILTRO ACTIVO: Ocultamos los que no tienen fecha para mantener la línea de tiempo limpia
         condiciones.append("fecha IS NOT NULL")
+
+    # Manejo de filtro por emoción (NUEVA LÓGICA SQL)
+    if emocion_filtro:
+        condiciones.append("emocion = %s")
+        parametros.append(emocion_filtro)
             
+    # Búsqueda por texto
     if query:
         condiciones.append("(titulo ILIKE %s OR descripcion ILIKE %s)")
         parametros.extend([f"%{query}%", f"%{query}%"])
@@ -70,6 +77,7 @@ def index():
         suenos=suenos_filtrados, 
         query_busqueda=query, 
         categoria_actual=categoria_filtro,
+        emocion_actual=emocion_filtro, # <-- ENVIAR EMOCIÓN ACTUAL A LA VISTA
         stats=stats,
         usuario_nombre=session['usuario_nombre'],
         fecha_hoy=fecha_hoy
@@ -99,15 +107,19 @@ def registrar():
     if not categorias or categorias == ['']:
         categorias = ['General']
         
+    emocion = request.form.get('emocion') # <-- CAPTURA DE EMOCIÓN
+    if not emocion or emocion.strip() == '':
+        emocion = None
+
     calidad_sueno = int(request.form.get('calidad_sueno', 5))
     destacado = 'destacado' in request.form
 
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO suenos (id, titulo, fecha, hora, descripcion, categorias, calidad_sueno, destacado, usuario_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
-            """, (id_sueno, titulo, fecha, hora, descripcion, categorias, calidad_sueno, destacado, session['usuario_id']))
+                INSERT INTO suenos (id, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, usuario_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            """, (id_sueno, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, session['usuario_id']))
             conn.commit()
     
     return redirect(url_for('main.index'))
@@ -134,6 +146,10 @@ def editar(id_sueno):
     if not categorias or categorias == ['']:
         categorias = ['General']
 
+    emocion = request.form.get('emocion') # <-- CAPTURA DE EMOCIÓN
+    if not emocion or emocion.strip() == '':
+        emocion = None
+
     calidad_sueno = int(request.form.get('calidad_sueno', 5))
     destacado = 'destacado' in request.form
 
@@ -141,9 +157,9 @@ def editar(id_sueno):
         with conn.cursor() as cursor:
             cursor.execute("""
                 UPDATE suenos 
-                SET titulo = %s, fecha = %s, hora = %s, descripcion = %s, categorias = %s, calidad_sueno = %s, destacado = %s
+                SET titulo = %s, fecha = %s, hora = %s, descripcion = %s, categorias = %s, emocion = %s, calidad_sueno = %s, destacado = %s
                 WHERE id = %s AND usuario_id = %s;
-            """, (titulo, fecha, hora, descripcion, categorias, calidad_sueno, destacado, int(id_sueno), session['usuario_id']))
+            """, (titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, int(id_sueno), session['usuario_id']))
             conn.commit()
             
     return redirect(url_for('main.index'))
