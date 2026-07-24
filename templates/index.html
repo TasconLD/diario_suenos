@@ -305,14 +305,16 @@
 
     <!-- LOGICA SCRIPT DEL SISTEMA -->
     <script>
+        // 1. Registro del Service Worker con ruta correcta (/static/sw.js)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('PWA: Service Worker activo'))
-                    .catch(err => console.error('PWA: Error', err));
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(reg => console.log('PWA: Service Worker activo en', reg.scope))
+                    .catch(err => console.error('PWA: Error al registrar SW', err));
             });
         }
 
+        // 2. Control de Modo Oscuro / Claro
         const themeToggleBtn = document.getElementById('theme-toggle');
         const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
         const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
@@ -339,13 +341,21 @@
             actualizarIconos();
         });
 
+        // 3. Lógica del Botón de Instalación PWA
         let deferredPrompt;
         const btnInstalar = document.getElementById('btn-instalar');
+
+        // Verificar si la app ya se ejecuta instalada (modo standalone)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+        if (isStandalone && btnInstalar) {
+            btnInstalar.classList.add('hidden');
+        }
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            if (btnInstalar) {
+            if (btnInstalar && !isStandalone) {
                 btnInstalar.classList.remove('hidden');
             }
         });
@@ -355,7 +365,10 @@
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
                     const { outcome } = await deferredPrompt.userChoice;
-                    btnInstalar.classList.add('hidden');
+                    console.log('Instalación:', outcome);
+                    if (outcome === 'accepted') {
+                        btnInstalar.classList.add('hidden');
+                    }
                     deferredPrompt = null;
                 }
             });
@@ -368,6 +381,7 @@
             deferredPrompt = null;
         });
 
+        // 4. Modal Edición
         function abrirModalEdicion(boton) {
             const id = boton.getAttribute('data-id');
             const titulo = boton.getAttribute('data-titulo');
@@ -390,6 +404,7 @@
             document.getElementById('modal-edicion').classList.remove('hidden');
         }
 
+        // 5. Gráfico de Categorías
         {% if stats.total > 0 %}
         document.addEventListener("DOMContentLoaded", function() {
             const ctx = document.getElementById('chartCategorias').getContext('2d');
