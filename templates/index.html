@@ -76,42 +76,49 @@
             </div>
         </div>
 
-        <!-- Métricas de Emociones -->
-<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 my-4">
+<!-- Métricas de Emociones: 5 en fila sin scroll (encajan al 100%) -->
+<div class="grid grid-cols-5 gap-1.5 my-3 w-full">
+    
+    <!-- Feliz -->
     <a href="{{ url_for('main.index', emocion='feliz') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'feliz' %}ring-2 ring-emerald-500{% endif %}">
-        <span class="text-xl">😊</span>
-        <span class="text-xs text-slate-400 mt-1">Feliz</span>
-        <span class="text-lg font-bold text-emerald-400">{{ stats.emocion_feliz }}</span>
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'feliz' %}ring-2 ring-emerald-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😊</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Feliz</span>
+        <span class="text-xs font-bold text-emerald-400 leading-none mt-1">{{ stats.emocion_feliz }}</span>
     </a>
 
+    <!-- Miedo -->
     <a href="{{ url_for('main.index', emocion='miedo') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'miedo' %}ring-2 ring-red-500{% endif %}">
-        <span class="text-xl">😨</span>
-        <span class="text-xs text-slate-400 mt-1">Miedo</span>
-        <span class="text-lg font-bold text-red-400">{{ stats.emocion_miedo }}</span>
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'miedo' %}ring-2 ring-red-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😨</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Miedo</span>
+        <span class="text-xs font-bold text-red-400 leading-none mt-1">{{ stats.emocion_miedo }}</span>
     </a>
 
+    <!-- Triste -->
     <a href="{{ url_for('main.index', emocion='triste') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'triste' %}ring-2 ring-blue-500{% endif %}">
-        <span class="text-xl">😢</span>
-        <span class="text-xs text-slate-400 mt-1">Triste</span>
-        <span class="text-lg font-bold text-blue-400">{{ stats.emocion_triste }}</span>
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'triste' %}ring-2 ring-blue-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😢</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Triste</span>
+        <span class="text-xs font-bold text-blue-400 leading-none mt-1">{{ stats.emocion_triste }}</span>
     </a>
 
+    <!-- Ansioso -->
     <a href="{{ url_for('main.index', emocion='ansioso') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'ansioso' %}ring-2 ring-amber-500{% endif %}">
-        <span class="text-xl">😰</span>
-        <span class="text-xs text-slate-400 mt-1">Ansioso</span>
-        <span class="text-lg font-bold text-amber-400">{{ stats.emocion_ansioso }}</span>
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'ansioso' %}ring-2 ring-amber-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😰</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Ansioso</span>
+        <span class="text-xs font-bold text-amber-400 leading-none mt-1">{{ stats.emocion_ansioso }}</span>
     </a>
 
+    <!-- Neutro -->
     <a href="{{ url_for('main.index', emocion='neutro') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all p-3 rounded-xl border border-slate-700/50 flex flex-col items-center cursor-pointer {% if emocion_actual == 'neutro' %}ring-2 ring-slate-400{% endif %}">
-        <span class="text-xl">😐</span>
-        <span class="text-xs text-slate-400 mt-1">Neutro</span>
-        <span class="text-lg font-bold text-slate-300">{{ stats.emocion_neutro }}</span>
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'neutro' %}ring-2 ring-slate-400 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😐</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Neutro</span>
+        <span class="text-xs font-bold text-slate-300 leading-none mt-1">{{ stats.emocion_neutro }}</span>
     </a>
+
 </div>
     </section>
 
