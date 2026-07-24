@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Entrenador Onírico{% endblock %}</title>
+    
+    <!-- Meta etiquetas PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Entrenador Onírico">
+    <meta name="theme-color" content="#4f46e5">
+
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen font-sans antialiased transition-colors duration-300 relative">
+
+    <!-- BOTÓN DE TEMA FLOTANTE -->
+    <div class="absolute top-4 right-4 z-40">
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition duration-150 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer">
+            <i id="theme-toggle-dark-icon" class="hidden fa-solid fa-moon text-sm md:text-base"></i>
+            <i id="theme-toggle-light-icon" class="hidden fa-solid fa-sun text-sm md:text-base"></i>
+        </button>
+    </div>
+
+    <!-- AQUÍ SE INYECTARÁ EL CONTENIDO DE CADA PÁGINA -->
+    {% block content %}{% endblock %}
+
+    <!-- JavaScript Global -->
+    <script src="/static/js/main.js"></script>
+    
+    <!-- Scripts extras opcionales según la página -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
