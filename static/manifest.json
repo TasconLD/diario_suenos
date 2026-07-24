@@ -1,6 +1,7 @@
 {
-  "name": "Diario de Sueños",
-  "short_name": "Sueños",
+  "name": "Entrenador Onírico",
+  "short_name": "Entrenador Onírico",
+  "description": "Tu entrenador personal para sueños lúcidos y análisis del subconsciente"
   "id": "/",
   "start_url": "/",
   "scope": "/",
