@@ -1,14 +1,14 @@
-const CACHE_NAME = 'diario-suenos-v1';
+const CACHE_NAME = 'entrenador-onirico-v3';
 const assets = [
   '/',
-  '/static/manifest.json',
-  'https://cdn.tailwindcss.com',
+  '/static/manifest.json', // Cambia a /manifest.json si no está en /static
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
 // Instalar el Service Worker
 self.addEventListener('install', e => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(assets);
@@ -16,7 +16,7 @@ self.addEventListener('install', e => {
   );
 });
 
-// Activar el Service Worker
+// Activar el Service Worker y limpiar cachés viejas
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => {
@@ -27,7 +27,7 @@ self.addEventListener('activate', e => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
