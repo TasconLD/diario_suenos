@@ -1,41 +1,26 @@
-const CACHE_NAME = 'entrenador-onirico-v4';
-const assets = [
-  '/',
-  '/static/manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/chart.js'
-];
-
-// Instalar el Service Worker
-self.addEventListener('install', e => {
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(assets);
-    })
-  );
-});
-
-// Activar el Service Worker y limpiar cachés viejas
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
-});
-
-// Peticiones Fetch
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cacheRes => {
-      return cacheRes || fetch(e.request);
-    })
-  );
-});
+{
+  "name": "Entrenador Onírico",
+  "short_name": "Entrenador Onírico",
+  "description": "Tu entrenador personal para sueños lúcidos y análisis del subconsciente",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
