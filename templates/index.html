@@ -5,7 +5,7 @@
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-4 md:py-8">
     
-    <!-- HEADER PRINCIPAL -->
+    <!-- BLOQUE: Header principal con saludo, botón instalar app y acciones -->
     <header class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 md:pb-6 pr-12 md:pr-0">
         <div class="text-center md:text-left">
             <h1 class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-500 bg-clip-text text-transparent tracking-tight">
@@ -40,8 +40,8 @@
         </div>
     </header>
 
-    <!-- TARJETAS DE ESTADÍSTICAS -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-8">
+<!-- BLOQUE: Tarjetas de estadísticas generales (total, bonitos, lucidos, pesadillas) -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-6 md:mb-8">
         <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
             <div class="p-2 rounded-xl bg-blue-500/10 text-blue-500 dark:text-blue-400"><i class="fa-solid fa-book text-base md:text-lg"></i></div>
             <div>
@@ -76,7 +76,24 @@
             </div>
         </div>
 
-<!-- Métricas de Emociones: 5 en fila sin scroll (encajan al 100%) -->
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+            <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-500 dark:text-indigo-400"><i class="fa-solid fa-eye text-base md:text-lg"></i></div>
+            <div>
+                <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">F. Despertar</p>
+                <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.falsos_despertares if stats.falsos_despertares is defined else 0 }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+            <div class="p-2 rounded-xl bg-purple-500/10 text-purple-500 dark:text-purple-400"><i class="fa-solid fa-spa text-base md:text-lg"></i></div>
+            <div>
+                <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">S. Astral</p>
+                <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.salidas_astrales if stats.salidas_astrales is defined else 0 }}</p>
+            </div>
+        </div>
+    </section>
+
+<!-- BLOQUE: Métricas de emociones (5 tarjetas clicables con filtro) -->
 <div class="grid grid-cols-5 gap-1.5 my-3 w-full">
     
     <!-- Feliz -->
@@ -122,7 +139,7 @@
 </div>
     </section>
 
-    <!-- SECCIÓN DE GRÁFICOS -->
+    <!-- BLOQUE: Sección de gráficos (dona de distribución + análisis en texto) -->
     {% if stats.total > 0 %}
     <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 md:mb-8">
         <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col items-center">
@@ -140,7 +157,7 @@
     </section>
     {% endif %}
 
-    <!-- FILTROS Y BÚSQUEDA -->
+<!-- BLOQUE: Filtros por categoría, filtro por emoción y búsqueda -->
     <section class="flex flex-col md:flex-row gap-3 justify-between items-center mb-6 bg-white dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="flex flex-wrap gap-1.5 w-full md:w-auto">
             <a href="{{ url_for('main.index') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual and not emocion_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Línea de Tiempo</a>
@@ -149,6 +166,9 @@
             <a href="{{ url_for('main.index', cat='bonito') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'bonito' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">😊 Bonitos</a>
             <a href="{{ url_for('main.index', cat='lucido') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'lucido' %}bg-yellow-500 text-slate-900 shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">✨ Lúcidos</a>
             <a href="{{ url_for('main.index', cat='pesadilla') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'pesadilla' %}bg-red-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">👹 Pesadillas</a>
+            <!-- ➕ NUEVOS BOTONES DE CATEGORÍA -->
+            <a href="{{ url_for('main.index', cat='falso despertar') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual in ['falso despertar', 'falsodespertar'] %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">👁️ Falso Despertar</a>
+            <a href="{{ url_for('main.index', cat='salida astral') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual in ['salida astral', 'salidaastral'] %}bg-purple-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">🧘 Salida Astral</a>
         </div>
         
         <form action="{{ url_for('main.index') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
@@ -174,21 +194,26 @@
         </form>
     </section>
 
-    <!-- LÍNEA DE TIEMPO PRINCIPAL -->
+<!-- BLOQUE: Línea de tiempo principal con las tarjetas de cada sueño -->
     <main class="relative border-l-2 border-slate-200 dark:border-slate-800 ml-3 md:ml-6 pl-5 md:pl-8 space-y-6">
         {% for sueno in suenos %}
         {% set es_destacado = sueno.destacado or sueno.destacado == 1 or sueno.destacado|string|lower == 'true' %}
+        {% set cats_lower = sueno.categorias|map('lower')|list %}
         
         <article class="relative border rounded-xl p-4 transition duration-200 flex flex-col justify-between shadow-sm
-            {% if 'lucido' in sueno.categorias|map('lower') %}bg-yellow-50/40 border-yellow-200 dark:bg-yellow-950/10 dark:border-yellow-900/40
-            {% elif 'pesadilla' in sueno.categorias|map('lower') %}bg-red-50/40 border-red-200 dark:bg-red-950/10 dark:border-red-900/40
-            {% elif 'bonito' in sueno.categorias|map('lower') %}bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/10 dark:border-emerald-900/40
+            {% if 'lucido' in cats_lower %}bg-yellow-50/40 border-yellow-200 dark:bg-yellow-950/10 dark:border-yellow-900/40
+            {% elif 'pesadilla' in cats_lower %}bg-red-50/40 border-red-200 dark:bg-red-950/10 dark:border-red-900/40
+            {% elif 'bonito' in cats_lower %}bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/10 dark:border-emerald-900/40
+            {% elif 'falso despertar' in cats_lower or 'falsodespertar' in cats_lower %}bg-indigo-50/40 border-indigo-200 dark:bg-indigo-950/10 dark:border-indigo-900/40
+            {% elif 'salida astral' in cats_lower or 'salidaastral' in cats_lower %}bg-purple-50/40 border-purple-200 dark:bg-purple-950/10 dark:border-purple-900/40
             {% else %}bg-blue-50/30 border-blue-200 dark:bg-blue-950/10 dark:border-blue-900/40{% endif %}">
             
             <div class="absolute -left-[27px] md:-left-[39px] top-6 w-3.5 h-3.5 rounded-full border-4 bg-white dark:bg-slate-900
-                {% if 'lucido' in sueno.categorias|map('lower') %}border-yellow-400
-                {% elif 'pesadilla' in sueno.categorias|map('lower') %}border-red-500
-                {% elif 'bonito' in sueno.categorias|map('lower') %}border-emerald-400
+                {% if 'lucido' in cats_lower %}border-yellow-400
+                {% elif 'pesadilla' in cats_lower %}border-red-500
+                {% elif 'bonito' in cats_lower %}border-emerald-400
+                {% elif 'falso despertar' in cats_lower or 'falsodespertar' in cats_lower %}border-indigo-500
+                {% elif 'salida astral' in cats_lower or 'salidaastral' in cats_lower %}border-purple-500
                 {% else %}border-blue-400{% endif %}"></div>
 
             <div>
@@ -219,7 +244,14 @@
                 
                 <div class="flex flex-wrap items-center gap-1.5 my-2">
                     {% for cat in sueno.categorias %}
-                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">{{ cat }}</span>
+                        {% set cat_lower = cat|lower %}
+                        {% if cat_lower in ['falso despertar', 'falsodespertar'] %}
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">👁️ Falso Despertar</span>
+                        {% elif cat_lower in ['salida astral', 'salidaastral'] %}
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">🧘 Salida Astral</span>
+                        {% else %}
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">{{ cat }}</span>
+                        {% endif %}
                     {% endfor %}
 
                     <!-- BADGE DE EMOCIÓN -->
@@ -276,7 +308,7 @@
     </main>
 </div>
 
-<!-- MODAL REGISTRO -->
+<!-- BLOQUE: Modal de registro de sueño nuevo -->
 <div id="modal-registro" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -312,6 +344,8 @@
                         <option value="Bonito">😊 Bonito</option>
                         <option value="Lucido">✨ Lúcido</option>
                         <option value="Pesadilla">👹 Pesadilla</option>
+                        <option value="Falso Despertar">👁️ Falso Despertar</option>
+                        <option value="Salida Astral">🧘 Salida Astral</option>
                         <option value="Normal">☁️ Normal</option>
                     </select>
                 </div>
@@ -351,7 +385,7 @@
     </div>
 </div>
 
-<!-- MODAL EDICIÓN -->
+<!-- BLOQUE: Modal de edición de sueño existente -->
 <div id="modal-edicion" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -387,6 +421,8 @@
                         <option value="Bonito">😊 Bonito</option>
                         <option value="Lucido">✨ Lúcido</option>
                         <option value="Pesadilla">👹 Pesadilla</option>
+                        <option value="Falso Despertar">👁️ Falso Despertar</option>
+                        <option value="Salida Astral">🧘 Salida Astral</option>
                         <option value="Normal">☁️ Normal</option>
                     </select>
                 </div>
@@ -426,6 +462,7 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- BLOQUE: Script para expandir/colapsar el relato completo del sueño -->
 <script>
     function toggleRelato(id) {
         const corto = document.getElementById(`relato-corto-${id}`);
@@ -498,6 +535,7 @@
     }
 </script>
 
+<!-- BLOQUE: Script del gráfico de dona (Chart.js) con distribución de categorías -->
 {% if stats.total > 0 %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {

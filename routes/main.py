@@ -6,8 +6,10 @@ from database import obtener_conexion
 from models import obtener_estadisticas
 from pdf_generator import generar_pdf_suenos
 
+# BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
 
+# BLOQUE: Ruta principal - listado de sueños con filtros y búsqueda
 @main_bp.route('/')
 def index():
     if 'usuario_id' not in session:
@@ -83,6 +85,7 @@ def index():
         fecha_hoy=fecha_hoy
     )
 
+# BLOQUE: Ruta para registrar un nuevo sueño
 @main_bp.route('/registrar', methods=['POST'])
 def registrar():
     if 'usuario_id' not in session:
@@ -124,6 +127,7 @@ def registrar():
     
     return redirect(url_for('main.index'))
 
+# BLOQUE: Ruta para editar un sueño existente
 @main_bp.route('/editar/<id_sueno>', methods=['POST'])
 def editar(id_sueno):
     if 'usuario_id' not in session:
@@ -164,6 +168,7 @@ def editar(id_sueno):
             
     return redirect(url_for('main.index'))
 
+# BLOQUE: Ruta para eliminar un sueño
 @main_bp.route('/eliminar/<id_sueno>')
 def eliminar(id_sueno):
     if 'usuario_id' not in session:
@@ -176,6 +181,7 @@ def eliminar(id_sueno):
     
     return redirect(url_for('main.index'))
 
+# BLOQUE: Ruta para exportar los sueños a PDF
 @main_bp.route('/exportar')
 def exportar():
     if 'usuario_id' not in session:
