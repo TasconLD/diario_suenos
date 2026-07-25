@@ -191,6 +191,127 @@ def eliminar(id_sueno):
     
     return redirect(url_for('main.index'))
 
+# BLOQUE: Ruta para la sección independiente de Señales Oníricas
+@main_bp.route('/senales')
+def senales():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+        
+    usuario_id = session['usuario_id']
+
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            # 1. Obtener todas las etiquetas de los sueños con su conteo
+            cursor.execute("""
+                SELECT unnest(tags) AS tag_nombre, COUNT(*) AS total
+                FROM suenos
+                WHERE usuario_id = %s AND tags IS NOT NULL AND array_length(tags, 1) > 0
+                GROUP BY tag_nombre
+                ORDER BY total DESC;
+            """, (usuario_id,))
+            conteo_tags = {row[0]: row[1] for row in cursor.fetchall()}
+
+            # 2. Obtener los significados/descripciones personales ya registradas
+            cursor.execute("""
+                SELECT tag, significado, categoria
+                FROM senales_oniricas
+                WHERE usuario_id = %s;
+            """, (usuario_id,))
+            info_senales = {row[0]: {'significado': row[1], 'categoria': row[2]} for row in cursor.fetchall()}
+
+    # 3. Consolidar el diccionario de señales
+    lista_senales = []
+    # Incluimos los tags encontrados en sueños
+    for tag_nombre, total in conteo_tags.items():
+        detalle = info_senales.get(tag_nombre, {})
+        lista_senales.append({
+            'nombre': tag_nombre,
+            'conteo': total,
+            'significado': detalle.get('significado', ''),
+            'categoria': detalle.get('categoria', 'General')
+        })
+
+    return render_template('senales.html', senales=lista_senales)
+
+# BLOQUE: Ficha detallada de una señal onírica
+@main_bp.route('/senales/<tag>')
+def detalle_senal(tag):
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+        
+    usuario_id = session['usuario_id']
+    tag_clean = tag.strip().lower()
+
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            # 1. Obtener la información/significado de la señal
+            cursor.execute("""
+                SELECT id, significado, categoria 
+                FROM senales_oniricas 
+                WHERE usuario_id = %s AND tag = %s;
+            """, (usuario_id, tag_clean))
+            registro = cursor.fetchone()
+
+            # 2. Obtener los sueños asociados a este tag
+            cursor.execute("""
+                SELECT id, titulo, fecha, descripcion, categorias, emocion, calidad_sueno 
+                FROM suenos 
+                WHERE usuario_id = %s AND %s = ANY(tags)
+                ORDER BY fecha DESC NULLS LAST, id DESC;
+            """, (usuario_id, tag_clean))
+            sueños_asociados = cursor.fetchall()
+
+    info = {
+        'tag': tag_clean,
+        'significado': registro[1] if registro else '',
+        'categoria': registro[2] if registro else 'Objeto',
+        'conteo': len(sueños_asociados)
+    }
+
+    return render_template('ficha_senal.html', senal=info, suenos=sueños_asociados)
+
+
+# BLOQUE: Guardar/Editar significado de una señal
+@main_bp.route('/senales/guardar', methods=['POST'])
+def guardar_senal():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+        
+    usuario_id = session['usuario_id']
+    tag = request.form.get('tag', '').strip().lower()
+    significado = request.form.get('significado', '').strip()
+    categoria = request.form.get('categoria', 'Objeto')
+
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO senales_oniricas (usuario_id, tag, significado, categoria)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (usuario_id, tag) 
+                DO UPDATE SET significado = EXCLUDED.significado, categoria = EXCLUDED.categoria;
+            """, (usuario_id, tag, significado, categoria))
+            conn.commit()
+
+    return redirect(url_for('main.detalle_senal', tag=tag))
+
+
+# BLOQUE: Eliminar registro de una señal
+@main_bp.route('/senales/eliminar/<tag>', methods=['POST'])
+def eliminar_senal(tag):
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                DELETE FROM senales_oniricas 
+                WHERE usuario_id = %s AND tag = %s;
+            """, (usuario_id, tag.strip().lower()))
+            conn.commit()
+
+    return redirect(url_for('main.senales'))
+
 # BLOQUE: Ruta para exportar los sueños a PDF
 @main_bp.route('/exportar')
 def exportar():
@@ -204,3 +325,5 @@ def exportar():
         mimetype="application/pdf",
         headers={"Content-disposition": f"attachment; filename=Diario_{session['usuario_nombre']}.pdf"}
     )
+    
+    
