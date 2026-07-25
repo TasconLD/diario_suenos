@@ -16,10 +16,12 @@ def obtener_estadisticas(usuario_id):
                     COALESCE(COUNT(*) FILTER (WHERE 'salida astral' = ANY(SELECT LOWER(c) FROM unnest(categorias) c) OR 'salidaastral' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as salidas_astrales,
                     COALESCE(ROUND(AVG(calidad_sueno), 1), 0.0) as promedio,
                     -- Conteos por emoción:
-                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'feliz'), 0) as emocion_feliz,
-                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'triste'), 0) as emocion_triste,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) IN ('alegria', 'feliz')), 0) as emocion_alegria,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) IN ('tristeza', 'triste')), 0) as emocion_tristeza,
                     COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'miedo'), 0) as emocion_miedo,
-                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'ansioso'), 0) as emocion_ansioso,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'paz'), 0) as emocion_paz,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) IN ('confusion', 'ansioso')), 0) as emocion_confusion,
+                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'asombro'), 0) as emocion_asombro,
                     COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'neutro'), 0) as emocion_neutro
                 FROM suenos
                 WHERE usuario_id = %s;

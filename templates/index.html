@@ -96,41 +96,41 @@
 <!-- BLOQUE: Métricas de emociones (5 tarjetas clicables con filtro) -->
 <div class="grid grid-cols-5 gap-1.5 my-3 w-full">
     
-    <!-- Feliz -->
-    <a href="{{ url_for('main.index', emocion='feliz') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'feliz' %}ring-2 ring-emerald-500 bg-slate-700/80{% endif %}">
+    <!-- Feliz / Alegría -->
+    <a href="{{ url_for('main.index', emocion='Alegria') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower in ['alegria', 'feliz'] %}ring-2 ring-emerald-500 bg-slate-700/80{% endif %}">
         <span class="text-sm">😊</span>
         <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Feliz</span>
-        <span class="text-xs font-bold text-emerald-400 leading-none mt-1">{{ stats.emocion_feliz }}</span>
+        <span class="text-xs font-bold text-emerald-400 leading-none mt-1">{{ stats.emocion_alegria }}</span>
     </a>
 
     <!-- Miedo -->
-    <a href="{{ url_for('main.index', emocion='miedo') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'miedo' %}ring-2 ring-red-500 bg-slate-700/80{% endif %}">
+    <a href="{{ url_for('main.index', emocion='Miedo') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower == 'miedo' %}ring-2 ring-red-500 bg-slate-700/80{% endif %}">
         <span class="text-sm">😨</span>
         <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Miedo</span>
         <span class="text-xs font-bold text-red-400 leading-none mt-1">{{ stats.emocion_miedo }}</span>
     </a>
 
     <!-- Triste -->
-    <a href="{{ url_for('main.index', emocion='triste') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'triste' %}ring-2 ring-blue-500 bg-slate-700/80{% endif %}">
+    <a href="{{ url_for('main.index', emocion='Tristeza') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower in ['tristeza', 'triste'] %}ring-2 ring-blue-500 bg-slate-700/80{% endif %}">
         <span class="text-sm">😢</span>
         <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Triste</span>
-        <span class="text-xs font-bold text-blue-400 leading-none mt-1">{{ stats.emocion_triste }}</span>
+        <span class="text-xs font-bold text-blue-400 leading-none mt-1">{{ stats.emocion_tristeza }}</span>
     </a>
 
-    <!-- Ansioso -->
-    <a href="{{ url_for('main.index', emocion='ansioso') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'ansioso' %}ring-2 ring-amber-500 bg-slate-700/80{% endif %}">
+    <!-- Ansioso / Confusión -->
+    <a href="{{ url_for('main.index', emocion='Confusion') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower in ['confusion', 'ansioso'] %}ring-2 ring-amber-500 bg-slate-700/80{% endif %}">
         <span class="text-sm">😰</span>
-        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Ansioso</span>
-        <span class="text-xs font-bold text-amber-400 leading-none mt-1">{{ stats.emocion_ansioso }}</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Confusion</span>
+        <span class="text-xs font-bold text-amber-400 leading-none mt-1">{{ stats.emocion_confusion }}</span>
     </a>
 
     <!-- Neutro -->
-    <a href="{{ url_for('main.index', emocion='neutro') }}" 
-       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual == 'neutro' %}ring-2 ring-slate-400 bg-slate-700/80{% endif %}">
+    <a href="{{ url_for('main.index', emocion='Neutro') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower == 'neutro' %}ring-2 ring-slate-400 bg-slate-700/80{% endif %}">
         <span class="text-sm">😐</span>
         <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Neutro</span>
         <span class="text-xs font-bold text-slate-300 leading-none mt-1">{{ stats.emocion_neutro }}</span>
@@ -184,7 +184,7 @@
                 <option value="Tristeza" {% if emocion_actual == 'Tristeza' %}selected{% endif %}>😢 Tristeza</option>
                 <option value="Paz" {% if emocion_actual == 'Paz' %}selected{% endif %}>😌 Paz</option>
                 <option value="Confusion" {% if emocion_actual == 'Confusion' %}selected{% endif %}>🤔 Confusión</option>
-                <option value="Asombro" {% if emocion_actual == 'Asombro' %}selected{% endif %}>😲 Asombro</option>
+                <option value="Neutro" {% if emocion_actual == 'Neutro' %}selected{% endif %}>😐 Neutro</option>
             </select>
 
             <div class="relative w-full md:w-56">
@@ -262,7 +262,7 @@
                             {% elif sueno.emocion == 'Tristeza' %}😢 Tristeza
                             {% elif sueno.emocion == 'Paz' %}😌 Paz
                             {% elif sueno.emocion == 'Confusion' %}🤔 Confusión
-                            {% elif sueno.emocion == 'Asombro' %}😲 Asombro
+                            {% elif sueno.emocion == 'Neutro' %}😐 Neutro
                             {% else %}🎭 {{ sueno.emocion }}{% endif %}
                         </span>
                     {% endif %}
@@ -358,7 +358,7 @@
                         <option value="Tristeza">😢 Tristeza</option>
                         <option value="Paz">😌 Paz</option>
                         <option value="Confusion">🤔 Confusión</option>
-                        <option value="Asombro">😲 Asombro</option>
+                        <option value="Neutro">😐 Neutro</option> 
                     </select>
                 </div>
                 <div>
@@ -435,7 +435,7 @@
                         <option value="Tristeza">😢 Tristeza</option>
                         <option value="Paz">😌 Paz</option>
                         <option value="Confusion">🤔 Confusión</option>
-                        <option value="Asombro">😲 Asombro</option>
+                        <option value="Neutro">😐 Neutro</option>
                     </select>
                 </div>
                 <div>

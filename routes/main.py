@@ -113,6 +113,8 @@ def registrar():
     emocion = request.form.get('emocion') # <-- CAPTURA DE EMOCIÓN
     if not emocion or emocion.strip() == '':
         emocion = None
+    else:
+        emocion = emocion.strip()
 
     calidad_sueno = int(request.form.get('calidad_sueno', 5))
     destacado = 'destacado' in request.form
