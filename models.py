@@ -19,9 +19,7 @@ def obtener_estadisticas(usuario_id):
                     COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) IN ('alegria', 'feliz')), 0) as emocion_alegria,
                     COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) IN ('tristeza', 'triste')), 0) as emocion_tristeza,
                     COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'miedo'), 0) as emocion_miedo,
-                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'paz'), 0) as emocion_paz,
                     COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) IN ('confusion', 'ansioso')), 0) as emocion_confusion,
-                    COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'asombro'), 0) as emocion_asombro,
                     COALESCE(COUNT(*) FILTER (WHERE LOWER(emocion) = 'neutro'), 0) as emocion_neutro
                 FROM suenos
                 WHERE usuario_id = %s;
