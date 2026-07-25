@@ -194,10 +194,12 @@
     </section>
 
 <!-- BLOQUE: Línea de tiempo principal con las tarjetas de cada sueño -->
+<div class="w-full">
     <main class="relative border-l-2 border-slate-200 dark:border-slate-800 ml-3 md:ml-6 pl-5 md:pl-8 space-y-6">
         {% for sueno in suenos %}
         {% set es_destacado = sueno.destacado or sueno.destacado == 1 or sueno.destacado|string|lower == 'true' %}
         {% set cats_lower = sueno.categorias|map('lower')|list %}
+        {% set string_tags = sueno.tags|join(', ') if sueno.tags else '' %}
         
         <article class="relative border rounded-xl p-4 transition duration-200 flex flex-col justify-between shadow-sm
             {% if 'lucido' in cats_lower %}bg-yellow-50/40 border-yellow-200 dark:bg-yellow-950/10 dark:border-yellow-900/40
@@ -264,6 +266,15 @@
                             {% else %}🎭 {{ sueno.emocion }}{% endif %}
                         </span>
                     {% endif %}
+
+                    <!-- BADGES DE ETIQUETAS / TAGS -->
+                    {% if sueno.tags %}
+                        {% for tag in sueno.tags %}
+                            <span class="text-[9px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center gap-0.5">
+                                <i class="fa-solid fa-tag text-[8px] text-indigo-400"></i>#{{ tag }}
+                            </span>
+                        {% endfor %}
+                    {% endif %}
                 </div>
 
                 <!-- RELATO CON DESPLIEGUE "VER MÁS" -->
@@ -292,6 +303,7 @@
                         data-hora="{{ sueno.hora if sueno.hora else '' }}"
                         data-descripcion="{{ sueno.descripcion }}" data-categoria="{{ sueno.categorias[0] if sueno.categorias else '' }}"
                         data-emocion="{{ sueno.emocion if sueno.emocion else '' }}"
+                        data-tags="{{ string_tags }}"
                         data-calidad="{{ sueno.calidad_sueno }}" data-destacado="{{ 'true' if es_destacado else 'false' }}"
                         class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition cursor-pointer">
                     <i class="fa-regular fa-pen-to-square"></i> Editar
@@ -368,6 +380,11 @@
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
                 <textarea name="descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
             </div>
+
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Etiquetas / Tags <span class="text-[9px] font-normal lowercase text-slate-400">(separadas por comas)</span></label>
+                <input type="text" name="tags" placeholder="ej. volar, agua, perro, infancia" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 placeholder:text-slate-500">
+            </div>
             
             <div class="flex items-center gap-2">
                 <input type="checkbox" name="destacado" id="destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
@@ -441,6 +458,11 @@
             </div>
 
             <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Etiquetas (separadas por coma)</label>
+                <input type="text" name="tags" id="edit-tags" placeholder="ej. volar, agua, perseguido" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+            </div>
+
+            <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
                 <textarea name="descripcion" id="edit-descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
             </div>
@@ -458,7 +480,7 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- BLOQUE: Script para expandir/colapsar el relato completo del sueño -->
+<!-- BLOQUE: Scripts de interacción (relato, fecha y modal de edición) -->
 <script>
     function toggleRelato(id) {
         const corto = document.getElementById(`relato-corto-${id}`);
@@ -501,6 +523,7 @@
         const descripcion = btn.getAttribute('data-descripcion');
         const categoria = btn.getAttribute('data-categoria');
         const emocion = btn.getAttribute('data-emocion');
+        const tags = btn.getAttribute('data-tags');
         const calidad = btn.getAttribute('data-calidad');
         const destacado = btn.getAttribute('data-destacado') === 'true';
 
@@ -508,11 +531,12 @@
         form.action = `/editar/${id}`;
 
         document.getElementById('edit-titulo').value = titulo;
-        document.getElementById('edit-hora').value = hora;
+        document.getElementById('edit-hora').value = (hora && hora !== 'None') ? hora : '';
         document.getElementById('edit-descripcion').value = descripcion;
-        document.getElementById('edit-categoria').value = categoria;
-        document.getElementById('edit-emocion').value = emocion;
-        document.getElementById('edit-calidad').value = calidad;
+        document.getElementById('edit-categoria').value = categoria || 'Normal';
+        document.getElementById('edit-emocion').value = emocion || '';
+        document.getElementById('edit-tags').value = tags || '';
+        document.getElementById('edit-calidad').value = calidad || 5;
         document.getElementById('edit-destacado').checked = destacado;
 
         const chkSinFecha = document.getElementById('edit-sin-fecha');

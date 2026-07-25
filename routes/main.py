@@ -116,15 +116,19 @@ def registrar():
     else:
         emocion = emocion.strip()
 
+    # Procesar tags enviados desde el formulario (separados por coma)
+    raw_tags = request.form.get('tags', '')
+    tags = [t.strip().lower() for t in raw_tags.split(',') if t.strip()] if raw_tags else []
+
     calidad_sueno = int(request.form.get('calidad_sueno', 5))
     destacado = 'destacado' in request.form
 
     with obtener_conexion() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO suenos (id, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, usuario_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-            """, (id_sueno, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, session['usuario_id']))
+                INSERT INTO suenos (id, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, usuario_id, tags)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            """, (id_sueno, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, session['usuario_id'], tags))
             conn.commit()
     
     return redirect(url_for('main.index'))
@@ -156,6 +160,10 @@ def editar(id_sueno):
     if not emocion or emocion.strip() == '':
         emocion = None
 
+    # Procesar tags enviados desde el formulario de edición (separados por coma)
+    raw_tags = request.form.get('tags', '')
+    tags = [t.strip().lower() for t in raw_tags.split(',') if t.strip()] if raw_tags else []
+
     calidad_sueno = int(request.form.get('calidad_sueno', 5))
     destacado = 'destacado' in request.form
 
@@ -163,9 +171,9 @@ def editar(id_sueno):
         with conn.cursor() as cursor:
             cursor.execute("""
                 UPDATE suenos 
-                SET titulo = %s, fecha = %s, hora = %s, descripcion = %s, categorias = %s, emocion = %s, calidad_sueno = %s, destacado = %s
+                SET titulo = %s, fecha = %s, hora = %s, descripcion = %s, categorias = %s, emocion = %s, tags = %s, calidad_sueno = %s, destacado = %s
                 WHERE id = %s AND usuario_id = %s;
-            """, (titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, int(id_sueno), session['usuario_id']))
+            """, (titulo, fecha, hora, descripcion, categorias, emocion, tags, calidad_sueno, destacado, int(id_sueno), session['usuario_id']))
             conn.commit()
             
     return redirect(url_for('main.index'))
