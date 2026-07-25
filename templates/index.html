@@ -207,7 +207,17 @@
         {% set cats_lower = sueno.categorias|map('lower')|list %}
         {% set string_tags = sueno.tags|join(', ') if sueno.tags else '' %}
         
-        <article class="relative border rounded-xl p-4 transition duration-200 flex flex-col justify-between shadow-sm
+        <!-- Tarjeta cliqueable con data-attributes blindados -->
+        <article onclick="abrirLecturaModal(this)"
+            data-titulo="{{ sueno.titulo|forceescape }}"
+            data-fecha="{{ sueno.fecha if sueno.fecha else 'Recuerdo Antiguo' }}"
+            data-hora="{{ sueno.hora_formateada if sueno.hora_formateada else '' }}"
+            data-calidad="{{ sueno.calidad_sueno }}"
+            data-descripcion="{{ sueno.descripcion|forceescape }}"
+            data-emocion="{{ sueno.emocion if sueno.emocion else '' }}"
+            data-tags="{{ string_tags|forceescape }}"
+            data-destacado="{{ 'true' if es_destacado else 'false' }}"
+            class="relative border rounded-xl p-4 transition duration-200 flex flex-col justify-between shadow-sm cursor-pointer hover:border-indigo-500/60 hover:shadow-md group
             {% if 'lucido' in cats_lower %}bg-yellow-50/40 border-yellow-200 dark:bg-yellow-950/10 dark:border-yellow-900/40
             {% elif 'pesadilla' in cats_lower %}bg-red-50/40 border-red-200 dark:bg-red-950/10 dark:border-red-900/40
             {% elif 'bonito' in cats_lower %}bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/10 dark:border-emerald-900/40
@@ -242,7 +252,7 @@
                     </span>
                 </div>
                 
-                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
                     {{ sueno.titulo }}
                     {% if es_destacado %}
                         <i class="fa-solid fa-star text-amber-400 text-sm animate-pulse" title="Destacado"></i>
@@ -261,7 +271,6 @@
                         {% endif %}
                     {% endfor %}
 
-                    <!-- BADGE DE EMOCIÓN -->
                     {% if sueno.emocion %}
                         <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
                             {% if sueno.emocion == 'Alegria' %}😊 Alegría
@@ -273,49 +282,34 @@
                         </span>
                     {% endif %}
 
-                    <!-- BADGES DE ETIQUETAS / TAGS -->
                     {% if sueno.tags %}
                         {% for tag in sueno.tags %}
                             <a href="{{ url_for('main.detalle_senal', tag=tag) }}" 
-                                class="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-md transition border border-indigo-500/20 inline-block">
-                                    #{{ tag }}
+                               onclick="event.stopPropagation();"
+                               class="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-md transition border border-indigo-500/20 inline-block">
+                                #{{ tag }}
                             </a>
                         {% endfor %}
                     {% endif %}
                 </div>
 
-                <!-- RELATO CON DESPLIEGUE "VER MÁS" -->
-                <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                    <div id="relato-corto-{{ sueno.id }}" class="line-clamp-3">
-                        {{ sueno.descripcion }}
-                    </div>
-                    
-                    <div id="relato-completo-{{ sueno.id }}" class="hidden whitespace-pre-line">
-                        {{ sueno.descripcion }}
-                    </div>
-
-                    {% if sueno.descripcion|length > 180 %}
-                    <button onclick="toggleRelato('{{ sueno.id }}')" 
-                            id="btn-relato-{{ sueno.id }}"
-                            class="text-indigo-600 dark:text-indigo-400 font-semibold text-[11px] mt-1.5 hover:underline cursor-pointer flex items-center gap-1">
-                        <span>Ver más</span> <i class="fa-solid fa-chevron-down text-[9px]"></i>
-                    </button>
-                    {% endif %}
+                <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
+                    {{ sueno.descripcion }}
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 mt-4 border-t border-slate-200/60 dark:border-slate-800/60 pt-3">
-                <button onclick="abrirModalEdicion(this)"
-                        data-id="{{ sueno.id }}" data-titulo="{{ sueno.titulo }}" data-fecha="{{ sueno.fecha if sueno.fecha else '' }}"
+                <button onclick="event.stopPropagation(); abrirModalEdicion(this)"
+                        data-id="{{ sueno.id }}" data-titulo="{{ sueno.titulo|forceescape }}" data-fecha="{{ sueno.fecha if sueno.fecha else '' }}"
                         data-hora="{{ sueno.hora if sueno.hora else '' }}"
-                        data-descripcion="{{ sueno.descripcion }}" data-categoria="{{ sueno.categorias[0] if sueno.categorias else '' }}"
+                        data-descripcion="{{ sueno.descripcion|forceescape }}" data-categoria="{{ sueno.categorias[0] if sueno.categorias else '' }}"
                         data-emocion="{{ sueno.emocion if sueno.emocion else '' }}"
-                        data-tags="{{ string_tags }}"
+                        data-tags="{{ string_tags|forceescape }}"
                         data-calidad="{{ sueno.calidad_sueno }}" data-destacado="{{ 'true' if es_destacado else 'false' }}"
                         class="text-slate-500 dark:text-slate-400 hover:text-blue-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-500/10 transition cursor-pointer">
                     <i class="fa-regular fa-pen-to-square"></i> Editar
                 </button>
-                <a href="{{ url_for('main.eliminar', id_sueno=sueno.id) }}" onclick="return confirm('¿Borrar?')"
+                <a href="{{ url_for('main.eliminar', id_sueno=sueno.id) }}" onclick="event.stopPropagation(); return confirm('¿Borrar?')"
                    class="text-slate-500 dark:text-slate-400 hover:text-red-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-red-500/10 transition">
                     <i class="fa-regular fa-trash-can"></i> Borrar
                 </a>
@@ -486,27 +480,133 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-<!-- BLOQUE: Scripts de interacción (relato, fecha y modal de edición) -->
-<script>
-    function toggleRelato(id) {
-        const corto = document.getElementById(`relato-corto-${id}`);
-        const completo = document.getElementById(`relato-completo-${id}`);
-        const btn = document.getElementById(`btn-relato-${id}`);
+{% block scripts%}
+<!-- BLOQUE: Modal de Lectura Completa del Sueño (Dentro de content para que Jinja lo renderice) -->
+<div id="modal-lectura-sueno" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <!-- Cabecera -->
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span id="lectura-fecha" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider"></span>
+                    <span id="lectura-hora" class="text-[11px] text-slate-400"></span>
+                </div>
+                <h3 id="lectura-titulo" class="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2"></h3>
+            </div>
+            <button onclick="cerrarModalLectura()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <!-- Cuerpo -->
+        <div class="p-5 overflow-y-auto space-y-4 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-100 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Emoción:</span>
+                    <span id="lectura-emocion" class="font-bold text-indigo-600 dark:text-indigo-300"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Calidad:</span>
+                    <span id="lectura-calidad" class="font-bold text-amber-500"></span>
+                </div>
+            </div>
 
-        if (completo.classList.contains('hidden')) {
-            corto.classList.add('hidden');
-            completo.classList.remove('hidden');
-            btn.innerHTML = '<span>Ver menos</span> <i class="fa-solid fa-chevron-up text-[9px]"></i>';
+            <!-- Tags -->
+            <div id="container-lectura-tags" class="flex flex-wrap gap-1.5"></div>
+
+            <!-- Relato -->
+            <div>
+                <h4 class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">Relato Completo</h4>
+                <p id="lectura-descripcion" class="text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed text-xs md:text-sm"></p>
+            </div>
+        </div>
+
+        <!-- Pie / Botón Cerrar -->
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+            <button onclick="cerrarModalLectura()" class="px-5 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- BLOQUE: Scripts de interacción -->
+<script>
+    // Función auxiliar para desescapar HTML en JS
+    function decodeHTML(html) {
+        if (!html) return '';
+        const txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    }
+
+    // Abrir Modal de Lectura leyendo datos desde el elemento (this)
+    function abrirLecturaModal(elem) {
+        if (!elem) return;
+
+        const titulo = decodeHTML(elem.getAttribute('data-titulo') || 'Sin título');
+        const fecha = elem.getAttribute('data-fecha') || '';
+        const hora = elem.getAttribute('data-hora') || '';
+        const calidad = elem.getAttribute('data-calidad') || '5';
+        const descripcion = decodeHTML(elem.getAttribute('data-descripcion') || '');
+        const emocion = elem.getAttribute('data-emocion') || '';
+        const tagsStr = decodeHTML(elem.getAttribute('data-tags') || '');
+        const esDestacado = elem.getAttribute('data-destacado') === 'true';
+
+        // Asignación SEGURA (comprueba que el elemento existe antes de modificarlo)
+        const elTitulo = document.getElementById('lectura-titulo');
+        const elFecha = document.getElementById('lectura-fecha');
+        const elHora = document.getElementById('lectura-hora');
+        const elCalidad = document.getElementById('lectura-calidad');
+        const elEmocion = document.getElementById('lectura-emocion');
+        const elDesc = document.getElementById('lectura-descripcion');
+
+        if (elTitulo) elTitulo.innerHTML = titulo + (esDestacado ? ' <i class="fa-solid fa-star text-amber-400 text-sm"></i>' : '');
+        if (elFecha) elFecha.innerText = fecha;
+        if (elHora) elHora.innerText = hora ? `• ${hora}` : '';
+        if (elCalidad) elCalidad.innerText = `${calidad} / 5 ⭐`;
+        if (elEmocion) elEmocion.innerText = emocion ? emocion : 'Sin especificar';
+        if (elDesc) elDesc.innerText = descripcion;
+
+        // Renderizar tags de forma segura
+        const containerTags = document.getElementById('container-lectura-tags');
+        if (containerTags) {
+            containerTags.innerHTML = '';
+            if (tagsStr && tagsStr.trim() !== '') {
+                const arrayTags = tagsStr.split(',');
+                arrayTags.forEach(t => {
+                    const cleanTag = t.trim();
+                    if (cleanTag) {
+                        const badge = document.createElement('span');
+                        badge.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600';
+                        badge.innerText = `#${cleanTag}`;
+                        containerTags.appendChild(badge);
+                    }
+                });
+            }
+        }
+
+        // Mostrar el modal
+        const modal = document.getElementById('modal-lectura-sueno');
+        if (modal) {
+            modal.classList.remove('hidden');
         } else {
-            corto.classList.remove('hidden');
-            completo.classList.add('hidden');
-            btn.innerHTML = '<span>Ver más</span> <i class="fa-solid fa-chevron-down text-[9px]"></i>';
+            console.error("No se encontró el elemento con ID 'modal-lectura-sueno'");
         }
     }
 
+    // Cerrar Modal de Lectura
+    function cerrarModalLectura() {
+        const modal = document.getElementById('modal-lectura-sueno');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    // Control de Fechas
     function toggleFecha(inputId, isChecked) {
         const fechaInput = document.getElementById(inputId);
+        if (!fechaInput) return;
+        
         if (isChecked) {
             fechaInput.value = '';
             fechaInput.removeAttribute('required');
@@ -522,45 +622,48 @@
         }
     }
 
+    // Modal de Edición
     function abrirModalEdicion(btn) {
         const id = btn.getAttribute('data-id');
-        const titulo = btn.getAttribute('data-titulo');
+        const titulo = decodeHTML(btn.getAttribute('data-titulo') || '');
         const fecha = btn.getAttribute('data-fecha');
         const hora = btn.getAttribute('data-hora');
-        const descripcion = btn.getAttribute('data-descripcion');
+        const descripcion = decodeHTML(btn.getAttribute('data-descripcion') || '');
         const categoria = btn.getAttribute('data-categoria');
         const emocion = btn.getAttribute('data-emocion');
-        const tags = btn.getAttribute('data-tags');
+        const tags = decodeHTML(btn.getAttribute('data-tags') || '');
         const calidad = btn.getAttribute('data-calidad');
         const destacado = btn.getAttribute('data-destacado') === 'true';
 
         const form = document.getElementById('form-edicion');
-        form.action = `/editar/${id}`;
+        if (form) form.action = `/editar/${id}`;
 
-        document.getElementById('edit-titulo').value = titulo;
-        document.getElementById('edit-hora').value = (hora && hora !== 'None') ? hora : '';
-        document.getElementById('edit-descripcion').value = descripcion;
-        document.getElementById('edit-categoria').value = categoria || 'Normal';
-        document.getElementById('edit-emocion').value = emocion || '';
-        document.getElementById('edit-tags').value = tags || '';
-        document.getElementById('edit-calidad').value = calidad || 5;
-        document.getElementById('edit-destacado').checked = destacado;
+        if (document.getElementById('edit-titulo')) document.getElementById('edit-titulo').value = titulo;
+        if (document.getElementById('edit-hora')) document.getElementById('edit-hora').value = (hora && hora !== 'None') ? hora : '';
+        if (document.getElementById('edit-descripcion')) document.getElementById('edit-descripcion').value = descripcion;
+        if (document.getElementById('edit-categoria')) document.getElementById('edit-categoria').value = categoria || 'Normal';
+        if (document.getElementById('edit-emocion')) document.getElementById('edit-emocion').value = emocion || '';
+        if (document.getElementById('edit-tags')) document.getElementById('edit-tags').value = tags || '';
+        if (document.getElementById('edit-calidad')) document.getElementById('edit-calidad').value = calidad || 5;
+        if (document.getElementById('edit-destacado')) document.getElementById('edit-destacado').checked = destacado;
 
         const chkSinFecha = document.getElementById('edit-sin-fecha');
         const editFechaInput = document.getElementById('edit-fecha');
 
         if (!fecha || fecha === 'None' || fecha === '') {
-            chkSinFecha.checked = true;
+            if (chkSinFecha) chkSinFecha.checked = true;
             toggleFecha('edit-fecha', true);
         } else {
-            chkSinFecha.checked = false;
+            if (chkSinFecha) chkSinFecha.checked = false;
             toggleFecha('edit-fecha', false);
-            editFechaInput.value = fecha;
+            if (editFechaInput) editFechaInput.value = fecha;
         }
 
-        document.getElementById('modal-edicion').classList.remove('hidden');
+        const modalEdit = document.getElementById('modal-edicion');
+        if (modalEdit) modalEdit.classList.remove('hidden');
     }
 </script>
+{% endblock %}
 
 <!-- BLOQUE: Script del gráfico de dona (Chart.js) con distribución de categorías -->
 {% if stats.total > 0 %}
@@ -600,4 +703,3 @@
     });
 </script>
 {% endif %}
-{% endblock %}
