@@ -1,0 +1,208 @@
+<!-- BLOQUE: Modal de registro de sueño nuevo -->
+<div id="modal-registro" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-feather text-indigo-500"></i> Registrar Sueño</h3>
+            <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form action="{{ url_for('main.registrar') }}" method="POST" class="p-4 space-y-3 text-xs">
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
+                <input type="text" name="titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
+                    <input type="date" name="fecha" id="reg-fecha" value="{{ fecha_hoy }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <input type="checkbox" name="sin_fecha" id="reg-sin-fecha" onchange="toggleFecha('reg-fecha', this.checked)" class="rounded text-indigo-600 w-3.5 h-3.5 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                        <label for="reg-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">Sin fecha (Recuerdo)</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hora (Opcional)</label>
+                    <input type="time" name="hora" id="reg-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
+                    <select name="categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                        <option value="Bonito">😊 Bonito</option>
+                        <option value="Lucido">✨ Lúcido</option>
+                        <option value="Pesadilla">👹 Pesadilla</option>
+                        <option value="Falso Despertar">👁️ Falso Despertar</option>
+                        <option value="Salida Astral">🧘 Salida Astral</option>
+                        <option value="Normal">☁️ Normal</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Emoción</label>
+                    <select name="emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                        <option value="">Ninguna</option>
+                        <option value="Alegria">😊 Alegría</option>
+                        <option value="Miedo">😱 Miedo</option>
+                        <option value="Tristeza">😢 Tristeza</option>
+                        <option value="Confusion">🤔 Confusión</option>
+                        <option value="Neutro">😐 Neutro</option> 
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 a 5)</label>
+                    <input type="number" name="calidad_sueno" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
+                <textarea name="descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Etiquetas / Tags <span class="text-[9px] font-normal lowercase text-slate-400">(separadas por comas)</span></label>
+                <input type="text" name="tags" placeholder="ej. volar, agua, perro, infancia" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 placeholder:text-slate-500">
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="destacado" id="destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                <label for="destacado" class="text-slate-600 dark:text-slate-300">Marcar como destacado ⭐</label>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
+                <button type="button" onclick="document.getElementById('modal-registro').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- BLOQUE: Modal de edición de sueño existente -->
+<div id="modal-edicion" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">Modificar Recuerdo</h3>
+            <button onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="form-edicion" method="POST" class="p-4 space-y-3 text-xs">
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
+                <input type="text" name="titulo" id="edit-titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
+                    <input type="date" name="fecha" id="edit-fecha" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <input type="checkbox" name="sin_fecha" id="edit-sin-fecha" onchange="toggleFecha('edit-fecha', this.checked)" class="rounded text-indigo-600 w-3.5 h-3.5 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                        <label for="edit-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">Sin fecha (Recuerdo)</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hora (Opcional)</label>
+                    <input type="time" name="hora" id="edit-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
+                    <select name="categoria" id="edit-categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                        <option value="Bonito">😊 Bonito</option>
+                        <option value="Lucido">✨ Lúcido</option>
+                        <option value="Pesadilla">👹 Pesadilla</option>
+                        <option value="Falso Despertar">👁️ Falso Despertar</option>
+                        <option value="Salida Astral">🧘 Salida Astral</option>
+                        <option value="Normal">☁️ Normal</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Emoción</label>
+                    <select name="emocion" id="edit-emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                        <option value="">Ninguna</option>
+                        <option value="Alegria">😊 Alegría</option>
+                        <option value="Miedo">😱 Miedo</option>
+                        <option value="Tristeza">😢 Tristeza</option>
+                        <option value="Confusion">🤔 Confusión</option>
+                        <option value="Neutro">😐 Neutro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Calidad</label>
+                    <input type="number" name="calidad_sueno" id="edit-calidad" min="1" max="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Etiquetas (separadas por coma)</label>
+                <input type="text" name="tags" id="edit-tags" placeholder="ej. volar, agua, perseguido" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+            </div>
+
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
+                <textarea name="descripcion" id="edit-descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="destacado" id="edit-destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                <label for="edit-destacado" class="text-slate-600 dark:text-slate-300">Mantener destacado ⭐</label>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
+                <button type="button" onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
+                <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-xl shadow-lg cursor-pointer">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- BLOQUE: Modal de Lectura Completa del Sueño (dentro de content, correctamente ubicado) -->
+<div id="modal-lectura-sueno" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <!-- Cabecera -->
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span id="lectura-fecha" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider"></span>
+                    <span id="lectura-hora" class="text-[11px] text-slate-400"></span>
+                </div>
+                <h3 id="lectura-titulo" class="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2"></h3>
+            </div>
+            <button onclick="cerrarModalLectura()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <!-- Cuerpo -->
+        <div class="p-5 overflow-y-auto space-y-4 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-100 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Emoción:</span>
+                    <span id="lectura-emocion" class="font-bold text-indigo-600 dark:text-indigo-300"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Calidad:</span>
+                    <span id="lectura-calidad" class="font-bold text-amber-500"></span>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div id="container-lectura-tags" class="flex flex-wrap gap-1.5"></div>
+
+            <!-- Relato -->
+            <div>
+                <h4 class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">Relato Completo</h4>
+                <p id="lectura-descripcion" class="text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed text-xs md:text-sm"></p>
+            </div>
+        </div>
+
+        <!-- Pie / Botón Cerrar -->
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+            <button onclick="cerrarModalLectura()" class="px-5 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>

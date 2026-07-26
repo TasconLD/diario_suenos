@@ -1,0 +1,35 @@
+<!-- BLOQUE: Filtros por categoría, filtro por emoción y búsqueda -->
+<section class="flex flex-col md:flex-row gap-3 justify-between items-center mb-6 bg-white dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="flex flex-wrap gap-1.5 w-full md:w-auto">
+        <a href="{{ url_for('main.index') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if not categoria_actual and not emocion_actual %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">Línea de Tiempo</a>
+        <a href="{{ url_for('main.index', cat='sin_fecha') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'sin_fecha' %}bg-purple-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">📜 Recuerdos</a>
+        <a href="{{ url_for('main.index', cat='destacado') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'destacado' %}bg-amber-500 text-slate-950 shadow-md border border-amber-400{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">⭐ Destacados</a>
+        <a href="{{ url_for('main.index', cat='bonito') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'bonito' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">😊 Bonitos</a>
+        <a href="{{ url_for('main.index', cat='lucido') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'lucido' %}bg-yellow-500 text-slate-900 shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">✨ Lúcidos</a>
+        <a href="{{ url_for('main.index', cat='pesadilla') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual == 'pesadilla' %}bg-red-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% endif %}">👹 Pesadillas</a>
+        <!-- ➕ NUEVOS BOTONES DE CATEGORÍA -->
+        <a href="{{ url_for('main.index', cat='falso despertar') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual in ['falso despertar', 'falsodespertar'] %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">👁️ Falso Despertar</a>
+        <a href="{{ url_for('main.index', cat='salida astral') }}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if categoria_actual in ['salida astral', 'salidaastral'] %}bg-purple-600 text-white shadow-md{% else %}bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700{% endif %}">🧘 Salida Astral</a>
+    </div>
+    
+    <form action="{{ url_for('main.index') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
+        {% if categoria_actual %}
+            <input type="hidden" name="cat" value="{{ categoria_actual }}">
+        {% endif %}
+        
+        <!-- FILTRO POR EMOCIÓN -->
+        <select name="emocion" onchange="this.form.submit()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm cursor-pointer">
+            <option value="">Todas las emociones</option>
+            <option value="Alegria" {% if emocion_actual == 'Alegria' %}selected{% endif %}>😊 Alegría</option>
+            <option value="Miedo" {% if emocion_actual == 'Miedo' %}selected{% endif %}>😱 Miedo</option>
+            <option value="Tristeza" {% if emocion_actual == 'Tristeza' %}selected{% endif %}>😢 Tristeza</option>
+            <option value="Confusion" {% if emocion_actual == 'Confusion' %}selected{% endif %}>🤔 Confusión</option>
+            <option value="Neutro" {% if emocion_actual == 'Neutro' %}selected{% endif %}>😐 Neutro</option>
+        </select>
+
+        <div class="relative w-full md:w-56">
+            <input type="text" name="q" value="{{ query_busqueda }}" placeholder="Buscar..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-sm">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+        </div>
+    </form>
+</section>

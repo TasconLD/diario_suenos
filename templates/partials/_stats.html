@@ -1,0 +1,118 @@
+<!-- BLOQUE: Tarjetas de estadísticas generales (total, bonitos, lucidos, pesadillas) -->
+<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-6 md:mb-8">
+    <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+        <div class="p-2 rounded-xl bg-blue-500/10 text-blue-500 dark:text-blue-400"><i class="fa-solid fa-book text-base md:text-lg"></i></div>
+        <div>
+            <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Recuerdos</p>
+            <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.total }}</p>
+        </div>
+    </div>
+    
+    <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+        <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-face-smile text-base md:text-lg"></i></div>
+        <div>
+            <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Bonitos</p>
+            <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">
+                {{ stats.bonitos if stats.bonitos is defined else (stats.bonito if stats.bonito is defined else 0) }}
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+        <div class="p-2 rounded-xl bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"><i class="fa-solid fa-wand-magic-sparkles text-base md:text-lg"></i></div>
+        <div>
+            <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Lúcidos</p>
+            <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.lucidos }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+        <div class="p-2 rounded-xl bg-red-500/10 text-red-500 dark:text-red-400"><i class="fa-solid fa-skull text-base md:text-lg"></i></div>
+        <div>
+            <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pesadillas</p>
+            <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.pesadillas }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+        <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-500 dark:text-indigo-400"><i class="fa-solid fa-eye text-base md:text-lg"></i></div>
+        <div>
+            <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">F. Despertar</p>
+            <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.falsos_despertares if stats.falsos_despertares is defined else 0 }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2.5 md:p-4 flex items-center gap-2.5 md:gap-3 shadow-sm">
+        <div class="p-2 rounded-xl bg-purple-500/10 text-purple-500 dark:text-purple-400"><i class="fa-solid fa-spa text-base md:text-lg"></i></div>
+        <div>
+            <p class="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">S. Astral</p>
+            <p class="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">{{ stats.salidas_astrales if stats.salidas_astrales is defined else 0 }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- BLOQUE: Métricas de emociones (5 tarjetas clicables con filtro) -->
+<div class="grid grid-cols-5 gap-1.5 my-3 w-full">
+    
+    <!-- Feliz / Alegría -->
+    <a href="{{ url_for('main.index', emocion='Alegria') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower in ['alegria', 'feliz'] %}ring-2 ring-emerald-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😊</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Feliz</span>
+        <span class="text-xs font-bold text-emerald-400 leading-none mt-1">{{ stats.emocion_alegria }}</span>
+    </a>
+
+    <!-- Miedo -->
+    <a href="{{ url_for('main.index', emocion='Miedo') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower == 'miedo' %}ring-2 ring-red-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😨</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Miedo</span>
+        <span class="text-xs font-bold text-red-400 leading-none mt-1">{{ stats.emocion_miedo }}</span>
+    </a>
+
+    <!-- Triste -->
+    <a href="{{ url_for('main.index', emocion='Tristeza') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower in ['tristeza', 'triste'] %}ring-2 ring-blue-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😢</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Triste</span>
+        <span class="text-xs font-bold text-blue-400 leading-none mt-1">{{ stats.emocion_tristeza }}</span>
+    </a>
+
+    <!-- Ansioso / Confusión -->
+    <a href="{{ url_for('main.index', emocion='Confusion') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower in ['confusion', 'ansioso'] %}ring-2 ring-amber-500 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😰</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Confusion</span>
+        <span class="text-xs font-bold text-amber-400 leading-none mt-1">{{ stats.emocion_confusion }}</span>
+    </a>
+
+    <!-- Neutro -->
+    <a href="{{ url_for('main.index', emocion='Neutro') }}" 
+       class="bg-slate-800/60 hover:bg-slate-700/60 transition-all py-1.5 px-1 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer text-center {% if emocion_actual|lower == 'neutro' %}ring-2 ring-slate-400 bg-slate-700/80{% endif %}">
+        <span class="text-sm">😐</span>
+        <span class="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">Neutro</span>
+        <span class="text-xs font-bold text-slate-300 leading-none mt-1">{{ stats.emocion_neutro }}</span>
+    </a>
+
+</div>
+
+<!-- BLOQUE: Sección de gráficos (dona de distribución + análisis en texto) -->
+{% if stats and stats.total and stats.total > 0 %}
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 md:mb-8">
+    <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col items-center justify-between">
+        <h4 class="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 self-start"><i class="fa-solid fa-chart-pie mr-2"></i> Distribución</h4>
+        
+        <!-- FIX: Se le da una altura fija y relativa para que Chart.js no colapse -->
+        <div class="w-full h-44 flex items-center justify-center relative">
+            <canvas id="chartCategorias"></canvas>
+        </div>
+    </div>
+    
+    <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-center">
+        <h4 class="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-circle-info mr-2"></i> Análisis</h4>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Registros guardados: <strong class="text-indigo-500 font-semibold">{{ stats.total }}</strong>. Descanso promedio: <strong class="text-emerald-500 font-semibold">{{ stats.promedio }} / 5</strong>.
+        </p>
+    </div>
+</section>
+{% endif %}
