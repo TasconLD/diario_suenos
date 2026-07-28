@@ -3,7 +3,7 @@ import re
 from collections import Counter
 import time
 from datetime import datetime, date
-from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash, jsonify
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 from models import obtener_estadisticas
@@ -593,6 +593,84 @@ def entrenador():
                            tecnicas=TECNICAS_ONIRICAS, 
                            consejo=consejo_hoy,
                            higienes=CONSEJOS_HIGIENE)
+    
+
+#BLOQUE: Rutas para el Mapa Onírico
+
+# RUTA 1: Renderiza la vista independiente con la pestaña
+@main_bp.route('/mapa')
+def vista_mapa():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+    return render_template('mapa.html')
+
+# RUTA 2: API que envía los datos del grafo en JSON (Llamada por el mapa.html)
+@main_bp.route('/api/mapa-onirico')
+def mapa_onirico():
+    if 'usuario_id' not in session:
+        return jsonify({'error': 'No autorizado'}), 401
+        
+    usuario_id = session['usuario_id']
+    nodos = []
+    enlaces = []
+    nodos_existentes = set()
+
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT id, titulo, emocion, tags 
+                FROM suenos 
+                WHERE usuario_id = %s;
+            """, (usuario_id,))
+            suenos = cursor.fetchall() or []
+
+            for s in suenos:
+                s_id = f"sueño_{s['id']}"
+                
+                # Nodo del Sueño
+                if s_id not in nodos_existentes:
+                    nodos.append({
+                        'id': s_id,
+                        'label': s['titulo'] or f"Sueño #{s['id']}",
+                        'group': 'sueno',
+                        'shape': 'dot',
+                        'size': 18
+                    })
+                    nodos_existentes.add(s_id)
+                
+                # Nodos de Emoción
+                if s.get('emocion') and s['emocion'].strip():
+                    em_id = f"emocion_{s['emocion'].strip().lower()}"
+                    if em_id not in nodos_existentes:
+                        nodos.append({
+                            'id': em_id,
+                            'label': s['emocion'].capitalize(),
+                            'group': 'emocion',
+                            'shape': 'diamond',
+                            'size': 14
+                        })
+                        nodos_existentes.add(em_id)
+                    enlaces.append({'from': s_id, 'to': em_id})
+
+                # Nodos de Tags
+                if s.get('tags') and isinstance(s['tags'], list):
+                    for tag in s['tags']:
+                        tag_clean = tag.strip().lower()
+                        if not tag_clean:
+                            continue
+                        tag_id = f"tag_{tag_clean}"
+                        if tag_id not in nodos_existentes:
+                            nodos.append({
+                                'id': tag_id,
+                                'label': f"#{tag_clean}",
+                                'group': 'tag',
+                                'shape': 'ellipse',
+                                'size': 12
+                            })
+                            nodos_existentes.add(tag_id)
+                        enlaces.append({'from': s_id, 'to': tag_id})
+
+    return jsonify({'nodes': nodos, 'edges': enlaces})
 
 # BLOQUE: Ruta para exportar los sueños a PDF
 @main_bp.route('/exportar')

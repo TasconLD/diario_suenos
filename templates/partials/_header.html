@@ -43,6 +43,18 @@
                 class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md cursor-pointer">
             <i class="fa-solid fa-plus text-[10px]"></i> Registrar Sueño
         </button>
+
+        <!-- BOTON MAPA NODOS-->
+        <a href="{{ url_for('main.vista_mapa') }}" 
+            class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors 
+                    {% if request.endpoint == 'main.vista_mapa' %}
+                        bg-indigo-600 text-white font-semibold shadow-sm
+                    {% else %}
+                        text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800
+                    {% endif %}">
+            <i class="fa-solid fa-network-wired"></i>
+            <span>Mapa Onírico</span>
+</a>
         
         <a href="{{ url_for('main.exportar') }}" 
                 class="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-sm">
