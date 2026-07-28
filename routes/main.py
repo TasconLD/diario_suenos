@@ -84,13 +84,17 @@ def index():
             pct_pesadillas = round((pesadillas / total_recuerdos * 100), 1) if total_recuerdos > 0 else 0
             pct_astral = round((salida_astral / total_recuerdos * 100), 1) if total_recuerdos > 0 else 0
 
-            # Top 3 Señales
+            # Top 3 Señales (Leyendo directamente desde la columna tags de suenos)
             cursor.execute("""
-                SELECT tag, COUNT(*) as uso_count
-                FROM senales_oniricas
-                WHERE usuario_id = %s
-                GROUP BY tag
-                ORDER BY uso_count DESC
+                SELECT 
+                    TRIM(LOWER(tag)) as tag, 
+                    COUNT(*) as uso_count
+                FROM suenos, 
+                     UNNEST(tags) AS tag
+                WHERE usuario_id = %s 
+                  AND TRIM(tag) != ''
+                GROUP BY TRIM(LOWER(tag))
+                ORDER BY uso_count DESC, tag ASC
                 LIMIT 3;
             """, (usuario_id,))
             top_senales = cursor.fetchall() or []
@@ -123,7 +127,7 @@ def index():
         top_senales=top_senales,
         tendencia_mensual=tendencia_mensual
     )
-
+    
 # BLOQUE: Ruta para registrar un nuevo sueño
 @main_bp.route('/registrar', methods=['POST'])
 def registrar():
