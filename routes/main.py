@@ -19,7 +19,7 @@ def index():
     usuario_id = session['usuario_id']
     query = request.args.get('q', '').strip().lower()
     categoria_filtro = request.args.get('cat', '').strip().lower()
-    emocion_filtro = request.args.get('emocion', '').strip() # <-- CAPTURA FILTRO EMOCIÓN
+    emocion_filtro = request.args.get('emocion', '').strip()
     
     stats = obtener_estadisticas(usuario_id)
     fecha_hoy = date.today().strftime('%Y-%m-%d')
@@ -37,11 +37,11 @@ def index():
         else:
             condiciones.append("%s = ANY(SELECT LOWER(c) FROM unnest(categorias) c)")
             parametros.append(categoria_filtro)
-    # SI NO HAY FILTROS ACTIVOS: Mantenemos la línea de tiempo limpia ocultando recuerdos sin fecha
+    # SI NO HAY FILTROS ACTIVOS: Ocultamos recuerdos sin fecha
     elif not emocion_filtro and not query:
         condiciones.append("fecha IS NOT NULL")
 
-    # Manejo de filtro por emoción (FIX: Búsqueda flexible por coincidencia parcial para evitar discrepancias)
+    # Manejo de filtro por emoción
     if emocion_filtro:
         condiciones.append("TRIM(emocion) ILIKE %s")
         parametros.append(f"%{emocion_filtro}%")
@@ -73,16 +73,55 @@ def index():
                 else:
                     s['hora_formateada'] = None
                     s['hora'] = ''
-                    
+
+# --- MÉTRICAS Y ESTADÍSTICAS AVANZADAS ---
+            total_recuerdos = stats.get('total', 0) if isinstance(stats, dict) else 0
+            lucidos = stats.get('lucidos', 0) if isinstance(stats, dict) else 0
+            pesadillas = stats.get('pesadillas', 0) if isinstance(stats, dict) else 0
+            salida_astral = stats.get('salidas_astrales', 0) if isinstance(stats, dict) else 0
+
+            pct_lucidos = round((lucidos / total_recuerdos * 100), 1) if total_recuerdos > 0 else 0
+            pct_pesadillas = round((pesadillas / total_recuerdos * 100), 1) if total_recuerdos > 0 else 0
+            pct_astral = round((salida_astral / total_recuerdos * 100), 1) if total_recuerdos > 0 else 0
+
+            # Top 3 Señales
+            cursor.execute("""
+                SELECT tag, COUNT(*) as uso_count
+                FROM senales_oniricas
+                WHERE usuario_id = %s
+                GROUP BY tag
+                ORDER BY uso_count DESC
+                LIMIT 3;
+            """, (usuario_id,))
+            top_senales = cursor.fetchall() or []
+
+            # Tendencia mensual
+            cursor.execute("""
+                SELECT 
+                    TO_CHAR(fecha, 'YYYY-MM') as mes, 
+                    COUNT(*) as cantidad
+                FROM suenos
+                WHERE usuario_id = %s AND fecha IS NOT NULL
+                GROUP BY TO_CHAR(fecha, 'YYYY-MM')
+                ORDER BY mes ASC
+                LIMIT 12;
+            """, (usuario_id,))
+            tendencia_mensual = cursor.fetchall() or []
+
     return render_template(
         'index.html', 
         suenos=suenos_filtrados, 
         query_busqueda=query, 
         categoria_actual=categoria_filtro,
         emocion_actual=emocion_filtro,
-        stats=stats,
-        usuario_nombre=session['usuario_nombre'],
-        fecha_hoy=fecha_hoy
+        stats=stats or {},
+        usuario_nombre=session.get('usuario_nombre', 'Usuario'),
+        fecha_hoy=fecha_hoy,
+        pct_lucidos=pct_lucidos,
+        pct_pesadillas=pct_pesadillas,
+        pct_astral=pct_astral,
+        top_senales=top_senales,
+        tendencia_mensual=tendencia_mensual
     )
 
 # BLOQUE: Ruta para registrar un nuevo sueño
