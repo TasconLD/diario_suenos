@@ -25,7 +25,11 @@ def serve_sw():
     if os.path.exists(filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
-        return Response(content, mimetype='application/javascript')
+        
+        response = Response(content, mimetype='application/javascript')
+        # Habilitar scope global para que capture toda la app y no solo /static/
+        response.headers['Service-Worker-Allowed'] = '/'
+        return response
     else:
         return "Service Worker File Not Found", 404
 
