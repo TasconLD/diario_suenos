@@ -110,40 +110,86 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
+const PUBLIC_VAPID_KEY = 'BDTlrmLtKcEeY7nxJeC8l-C3vbhRFjkrNKattkr2r-V50hbyyiOpPApt0SZcU-vbwjrIw1gpw9cMATaaKdthU34';
 
-    // 1. Registrar Service Worker desde la raíz con scope global
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+async function sincronizarPushConServidor() {
+    if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') {
+        console.warn("⚠️ Notificaciones no permitidas o SW no soportado.");
+        return;
+    }
+
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        let subscription = await reg.pushManager.getSubscription();
+
+        if (!subscription) {
+            const convertedKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
+            subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: convertedKey
+            });
+        }
+
+        const config = {
+            notif_matutino: localStorage.getItem('notif_matutino') === 'true',
+            hora_matutino: localStorage.getItem('hora_matutino') || '07:00',
+            notif_nocturno: localStorage.getItem('notif_nocturno') === 'true',
+            hora_nocturno: localStorage.getItem('hora_nocturno') || '22:30',
+            notif_rc: localStorage.getItem('notif_rc') === 'true',
+            frec_rc: localStorage.getItem('frec_rc') || '120'
+        };
+
+        const response = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription, config })
+        });
+
+        const resData = await response.json();
+        console.log("✅ Respuesta del servidor:", resData);
+        alert(" Dispositivo sincronizado correctamente con el servidor de notificaciones.");
+    } catch (err) {
+        console.error("❌ Error sincronizando suscripción:", err);
+        alert("Error al sincronizar con el servidor: " + err.message);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
     if ('serviceWorker' in navigator) {
         try {
-            const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-            console.log("SW Registrado correctamente en Scope Global:", reg);
+            await navigator.serviceWorker.register('/sw.js', { scope: '/' });
         } catch (err) {
             console.error("Error registrando SW:", err);
         }
     }
 
-    // 2. Control del Banner de Permisos
     function actualizarEstadoPermisos() {
         const banner = document.getElementById('permiso-banner');
         if (!banner) return;
 
-        if (!('Notification' in window)) {
-            banner.className = "p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 text-xs flex items-center gap-2";
-            banner.innerHTML = "<i class='fa-solid fa-circle-xmark text-base'></i> Tu navegador no soporta notificaciones.";
-            return;
-        }
-
         if (Notification.permission === 'granted') {
             banner.classList.add('hidden');
+            sincronizarPushConServidor();
         } else if (Notification.permission === 'denied') {
             banner.className = "p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2";
-            banner.innerHTML = "<i class='fa-solid fa-lock text-base'></i> <span>Notificaciones bloqueadas en tu dispositivo. Actívalas en los ajustes del sitio.</span>";
+            banner.innerHTML = "<i class='fa-solid fa-lock text-base'></i> <span>Notificaciones bloqueadas en tu navegador. Actívalas en la configuración del sitio.</span>";
         } else {
             banner.className = "p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs flex items-center justify-between gap-4";
             banner.innerHTML = `
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-bell text-base"></i>
-                    <span>Permite las notificaciones para recibir alertas y Reality Checks.</span>
+                    <span>Permite las notificaciones para activar alertas.</span>
                 </div>
                 <button id="btn-solicitar-permiso" class="px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">
                     Activar Notificaciones
@@ -156,25 +202,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // 3. Cargar y Guardar Preferencias
-    const cargarConfig = () => {
-        const mat = document.getElementById('check-matutino');
-        const hMat = document.getElementById('hora-matutino');
-        const noc = document.getElementById('check-nocturno');
-        const hNoc = document.getElementById('hora-nocturno');
-        const rc = document.getElementById('check-rc');
-        const fRc = document.getElementById('frecuencia-rc');
-
-        if (mat) mat.checked = localStorage.getItem('notif_matutino') === 'true';
-        if (hMat) hMat.value = localStorage.getItem('hora_matutino') || '07:00';
-
-        if (noc) noc.checked = localStorage.getItem('notif_nocturno') === 'true';
-        if (hNoc) hNoc.value = localStorage.getItem('hora_nocturno') || '22:30';
-
-        if (rc) rc.checked = localStorage.getItem('notif_rc') === 'true';
-        if (fRc) fRc.value = localStorage.getItem('frec_rc') || '120';
-    };
-
     const guardarConfig = () => {
         const mat = document.getElementById('check-matutino');
         const hMat = document.getElementById('hora-matutino');
@@ -185,51 +212,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (mat) localStorage.setItem('notif_matutino', mat.checked);
         if (hMat) localStorage.setItem('hora_matutino', hMat.value);
-
         if (noc) localStorage.setItem('notif_nocturno', noc.checked);
         if (hNoc) localStorage.setItem('hora_nocturno', hNoc.value);
-
         if (rc) localStorage.setItem('notif_rc', rc.checked);
         if (fRc) localStorage.setItem('frec_rc', fRc.value);
+
+        sincronizarPushConServidor();
     };
 
     document.querySelectorAll('input, select').forEach(el => {
         el.addEventListener('change', guardarConfig);
     });
 
-    // 4. Probar Notificación DIRECTA
-    const btnTestRC = document.getElementById('btn-test-rc');
-    btnTestRC?.addEventListener('click', async () => {
-        console.log("👉 Botón presionado. Verificando permiso...");
-
-        if (Notification.permission !== 'granted') {
-            alert("Las notificaciones no están concedidas. Estado actual: " + Notification.permission);
-            return;
-        }
-
-        try {
-            if ('serviceWorker' in navigator) {
-                const reg = await navigator.serviceWorker.ready;
-                console.log("SW Listo. Lanzando notificación directa...");
-                await reg.showNotification("👁️ Reality Check", {
-                    body: "¿Estás soñando ahora mismo? Revisa tus manos o mira un reloj.",
-                    vibrate: [200, 100, 200],
-                    tag: 'test-rc'
-                });
-                console.log("✅ Notificación enviada con éxito.");
-            } else {
-                new Notification("👁️ Reality Check", {
-                    body: "¿Estás soñando ahora mismo?"
-                });
-            }
-        } catch (err) {
-            console.error("❌ Error al mostrar notificación:", err);
-            alert("Error al mostrar notificación: " + err.message);
-        }
-    });
-
     actualizarEstadoPermisos();
-    cargarConfig();
 });
 </script>
 {% endblock %}
