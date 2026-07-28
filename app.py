@@ -12,16 +12,16 @@ from routes.main import main_bp
 # -------------------------------------------------------------
 # CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
 # -------------------------------------------------------------
-# -------------------------------------------------------------
-# CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
-# -------------------------------------------------------------
-VAPID_PUBLIC_KEY = "BF_KxpB9S78JmgmgXe7iaQoylBNWxLwsN9Q-rAKcMEleTBy1yZGyjEZwCNmJcQ7TlqNkxp9kpBWfEtQDT6A2bZA"
-VAPID_PRIVATE_KEY = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgTqiGX9PIG3QmcOpYyJEBEHLaD2qTrCuwH71xT7f4EjqhRANCAARfysaQfUu_CZoJoF3u4mkKMpQTVsS8LDfUPqwCnDBJXkwctcmRsoxGcAjZiXEO05ajZMafZKQVnxLUA0-gNm2Q"
+VAPID_PUBLIC_KEY = "BOhdHbRniwliKrGfNXASKf1cz4pifHUbmu1r1emJvDQkTR-Sy0B-s0oko6VxIr4kyebdSZioJtJxX1UW4M2PYOM"
+VAPID_PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgE1IImjJTSY/dbnEs
+has0AxSiYpHuFC9qVcie+O76LB+hRANCAAToXR20Z4sJYiqxnzVwEin9XM+KYnx1
+G5rta9Xpibw0JE0fkstAfrNKJKOlcSK+JMnm3UmYqCbScV9VFuDNj2Dj
+-----END PRIVATE KEY-----"""
 
 VAPID_CLAIMS = {
     "sub": "mailto:admin@diariosuenos.com"
 }
-
 # BLOQUE: Creación e inicialización de la app Flask
 app = Flask(__name__)
 
