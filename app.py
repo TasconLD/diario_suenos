@@ -141,6 +141,8 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(func=verificar_recordatorios, trigger="interval", minutes=1)
 scheduler.start()
 
+###### BLOQUES DE DIAGNOSTICOS TEMPORAL NOTIFICACIONES #####
+
 #BLOQUE: endpoint temporal de prueba directa
 @app.route('/api/test-push-ahora', methods=['GET'])
 def test_push_ahora():
@@ -156,6 +158,44 @@ def test_push_ahora():
             
     return jsonify({'success': True, 'enviados': enviados, 'total': len(suscripciones)})
 
+# -------------------------------------------------------------
+# RUTA DE DIAGNÓSTICO: PROBAR NOTIFICACIÓN DIURNA Y NOCTURNA
+# -------------------------------------------------------------
+@app.route('/api/probar-alarmas-ahora', methods=['GET'])
+def probar_alarmas_ahora():
+    suscripciones = cargar_suscripciones()
+    if not suscripciones:
+        return jsonify({
+            'status': 'error', 
+            'mensaje': 'No hay ningún dispositivo suscrito. Ve a la app en tu celular y mueve una hora para registrarte.'
+        }), 400
+
+    resultados = []
+    for endpoint_id, item in suscripciones.items():
+        sub = item.get('subscription')
+        
+        # Intentar enviar notificación de prueba
+        exito_matutino = enviar_push(
+            sub, 
+            "☀️ PRUEBA DIURNA", 
+            "¡Funciona! Esta es la notificación matutina de prueba.", 
+            "matutino"
+        )
+        
+        exito_nocturno = enviar_push(
+            sub, 
+            "🌙 PRUEBA NOCTURNA", 
+            "¡Funciona! Esta es la notificación nocturna de prueba.", 
+            "nocturno"
+        )
+
+        resultados.append({
+            'dispositivo': endpoint_id,
+            'push_matutino_enviado': exito_matutino,
+            'push_nocturno_enviado': exito_nocturno
+        })
+
+    return jsonify({'status': 'ok', 'resultados': resultados})
 
 
 # BLOQUE: Arranque del servidor local
