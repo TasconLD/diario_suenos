@@ -179,6 +179,15 @@
             </div>
         </div>
 
+            <!-- Top Palabras Frecuentes -->
+            <div class="flex flex-wrap gap-1.5">
+                {% for item in top_palabras %}
+                    <span class="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md font-medium">
+                        {{ item.palabra }} ({{ item.cantidad }})
+                    </span>
+                {% endfor %}
+            </div>
+
         <!-- Pie explicativo -->
         <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-slate-400 flex justify-between items-center">
             <span>Registros Totales: <strong class="text-slate-700 dark:text-slate-200 font-bold">{{ stats.total }}</strong></span>

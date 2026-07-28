@@ -1,4 +1,6 @@
 import random
+import re
+from collections import Counter
 import time
 from datetime import datetime, date
 from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash
@@ -9,6 +11,24 @@ from pdf_generator import generar_pdf_suenos
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
+
+# Lista de palabras a ignorar (stopwords en español)
+STOPWORDS_ES = {
+    'de', 'la', 'que', 'el', 'en', 'y', 'a', 'los', 'del', 'se', 'las', 'por', 'un', 'para', 'con', 
+    'no', 'una', 'su', 'al', 'lo', 'como', 'más', 'pero', 'sus', 'le', 'ya', 'o', 'este', 'sí', 
+    'porque', 'esta', 'son', 'entre', 'está', 'cuando', 'muy', 'sin', 'sobre', 'también', 'me', 
+    'hasta', 'hay', 'donde', 'quien', 'desde', 'todo', 'nos', 'durante', 'todos', 'uno', 'les', 
+    'ni', 'contra', 'otros', 'ese', 'eso', 'ante', 'ellos', 'e', 'esto', 'mí', 'antes', 'algunos', 
+    'qué', 'unos', 'yo', 'otro', 'otras', 'otra', 'él', 'tanto', 'esa', 'estos', 'mucho', 'quienes', 
+    'nada', 'muchos', 'cual', 'poco', 'ella', 'estar', 'estas', 'algunas', 'algo', 'nosotros', 
+    'mi', 'mis', 'tus', 'tu', 'fui', 'iba', 'estaba', 'había', 'tenía', 'ver', 'vía', 'dijo', 'sueño',
+    'estoy', 'era', 'luego', 'casa', 'escena', 'entonces', 'ahi', 'lugar', 'mama', 'ahí','mamá', 'creo',
+    'recuerdo', 'cosas', 'cuenta', 'momento', 'digo', 'tipo', 'dice', 'fue', 'personas', 'vez', 'dos',
+    'decía', 'voy', 'así', 'habitación','algún', 'vida', 'veo', 'puedo', 'soñe', 'dentro', 'soñando',
+    'veia','veía', 'dije','unas', 'lado','ser', 'parte', 'podía', 'tengo','tiene', 'llega','estamos',
+    'doy', 'solo', 'hacer', 'hace', 'siempre', 
+
+}
 
 # BLOQUE: Ruta principal - listado de sueños con filtros y búsqueda
 @main_bp.route('/')
@@ -84,7 +104,7 @@ def index():
             pct_pesadillas = round((pesadillas / total_recuerdos * 100), 1) if total_recuerdos > 0 else 0
             pct_astral = round((salida_astral / total_recuerdos * 100), 1) if total_recuerdos > 0 else 0
 
-            # Top 3 Señales (Leyendo directamente desde la columna tags de suenos)
+            # 1. Top 3 Señales / Tags
             cursor.execute("""
                 SELECT 
                     TRIM(LOWER(tag)) as tag, 
@@ -99,7 +119,41 @@ def index():
             """, (usuario_id,))
             top_senales = cursor.fetchall() or []
 
-            # Tendencia mensual
+            # 2. Top Emociones más repetidas
+            cursor.execute("""
+                SELECT 
+                    TRIM(LOWER(emocion)) as emocion, 
+                    COUNT(*) as cantidad
+                FROM suenos
+                WHERE usuario_id = %s 
+                  AND emocion IS NOT NULL 
+                  AND TRIM(emocion) != ''
+                GROUP BY TRIM(LOWER(emocion))
+                ORDER BY cantidad DESC
+                LIMIT 3;
+            """, (usuario_id,))
+            top_emociones = cursor.fetchall() or []
+
+            # 3. Top Palabras clave más frecuentes en descripciones
+            cursor.execute("""
+                SELECT descripcion 
+                FROM suenos 
+                WHERE usuario_id = %s AND descripcion IS NOT NULL AND TRIM(descripcion) != '';
+            """, (usuario_id,))
+            filas_desc = cursor.fetchall() or []
+            
+            palabras_conteo = Counter()
+            for f in filas_desc:
+                texto = f['descripcion'].lower()
+                # Extrae palabras alfanuméricas de más de 2 caracteres
+                palabras = re.findall(r'\b[a-záéíóúñ]{3,}\b', texto)
+                for p in palabras:
+                    if p not in STOPWORDS_ES:
+                        palabras_conteo[p] += 1
+                        
+            top_palabras = [{'palabra': p, 'cantidad': c} for p, c in palabras_conteo.most_common(5)]
+
+            # 4. Tendencia mensual
             cursor.execute("""
                 SELECT 
                     TO_CHAR(fecha, 'YYYY-MM') as mes, 
@@ -125,6 +179,8 @@ def index():
         pct_pesadillas=pct_pesadillas,
         pct_astral=pct_astral,
         top_senales=top_senales,
+        top_emociones=top_emociones,
+        top_palabras=top_palabras,
         tendencia_mensual=tendencia_mensual
     )
     
