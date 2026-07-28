@@ -12,8 +12,11 @@ from routes.main import main_bp
 # -------------------------------------------------------------
 # CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
 # -------------------------------------------------------------
-VAPID_PUBLIC_KEY = "BBK-aJ16_XU9Q345oA-n4iX8_n0I7vLqX1u19xI0U197zS9e8t4O4V0O8R2N117f35492t1"
-VAPID_PRIVATE_KEY = "-aJ16_XU9Q345oA-n4iX8_n0I7vLqX1u19xI0U19"
+# -------------------------------------------------------------
+# CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
+# -------------------------------------------------------------
+VAPID_PUBLIC_KEY = "BF_KxpB9S78JmgmgXe7iaQoylBNWxLwsN9Q-rAKcMEleTBy1yZGyjEZwCNmJcQ7TlqNkxp9kpBWfEtQDT6A2bZA"
+VAPID_PRIVATE_KEY = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgTqiGX9PIG3QmcOpYyJEBEHLaD2qTrCuwH71xT7f4EjqhRANCAARfysaQfUu_CZoJoF3u4mkKMpQTVsS8LDfUPqwCnDBJXkwctcmRsoxGcAjZiXEO05ajZMafZKQVnxLUA0-gNm2Q"
 
 VAPID_CLAIMS = {
     "sub": "mailto:admin@diariosuenos.com"
