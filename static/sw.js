@@ -39,3 +39,26 @@ self.addEventListener('fetch', e => {
     })
   );
 });
+
+// ==============================================================================
+// MANEJO DE NOTIFICACIONES Y REALITY CHECKS
+// ==============================================================================
+
+// Al hacer clic en una notificación enviada por el SW
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+
+  // Enfocar la app si ya está abierta, o abrirla si está en segundo plano
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
+});

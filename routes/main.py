@@ -672,6 +672,15 @@ def mapa_onirico():
 
     return jsonify({'nodes': nodos, 'edges': enlaces})
 
+
+# BLOQUE: Recordatorios, Notificaciones y Reality Checks (PWA / Offline)
+@main_bp.route('/recordatorios')
+def vista_recordatorios():
+    """Renders the notifications and reality checks settings page."""
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+    return render_template('recordatorios.html')
+
 # BLOQUE: Ruta para exportar los sueños a PDF
 @main_bp.route('/exportar')
 def exportar():
