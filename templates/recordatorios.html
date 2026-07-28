@@ -111,7 +111,8 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-// 1. Registrar Service Worker desde la raíz con scope global
+
+    // 1. Registrar Service Worker desde la raíz con scope global
     if ('serviceWorker' in navigator) {
         try {
             const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
@@ -123,6 +124,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 2. Control del Banner de Permisos
     function actualizarEstadoPermisos() {
+        const banner = document.getElementById('permiso-banner');
         if (!banner) return;
 
         if (!('Notification' in window)) {
@@ -195,41 +197,36 @@ document.addEventListener("DOMContentLoaded", async () => {
         el.addEventListener('change', guardarConfig);
     });
 
-    // 4. Probar Notificación DIRECTA Y CONFIABLE
-    if (btnTestRC) {
-        btnTestRC.addEventListener('click', async () => {
-            console.log("👉 Botón presionado. Verificando permiso...");
+    // 4. Probar Notificación DIRECTA
+    const btnTestRC = document.getElementById('btn-test-rc');
+    btnTestRC?.addEventListener('click', async () => {
+        console.log("👉 Botón presionado. Verificando permiso...");
 
-            if (Notification.permission !== 'granted') {
-                alert("Las notificaciones no están concedidas en el navegador/celular. Estado: " + Notification.permission);
-                return;
-            }
+        if (Notification.permission !== 'granted') {
+            alert("Las notificaciones no están concedidas. Estado actual: " + Notification.permission);
+            return;
+        }
 
-            try {
-                // Forma 1 Directa: Usando showNotification desde el Registro Activo del SW
-                if ('serviceWorker' in navigator) {
-                    const reg = await navigator.serviceWorker.ready;
-                    console.log("SW Listo. Lanzando notificación directa...");
-                    await reg.showNotification("👁️ Reality Check", {
-                        body: "¿Estás soñando ahora mismo? Revisa tus manos o mira un reloj.",
-                        vibrate: [200, 100, 200],
-                        tag: 'test-rc'
-                    });
-                    console.log("✅ Notificación enviada con éxito.");
-                } else {
-                    // Fallback Nativo
-                    new Notification("👁️ Reality Check", {
-                        body: "¿Estás soñando ahora mismo?"
-                    });
-                }
-            } catch (err) {
-                console.error("❌ Error al mostrar notificación:", err);
-                alert("Error al mostrar notificación: " + err.message);
+        try {
+            if ('serviceWorker' in navigator) {
+                const reg = await navigator.serviceWorker.ready;
+                console.log("SW Listo. Lanzando notificación directa...");
+                await reg.showNotification("👁️ Reality Check", {
+                    body: "¿Estás soñando ahora mismo? Revisa tus manos o mira un reloj.",
+                    vibrate: [200, 100, 200],
+                    tag: 'test-rc'
+                });
+                console.log("✅ Notificación enviada con éxito.");
+            } else {
+                new Notification("👁️ Reality Check", {
+                    body: "¿Estás soñando ahora mismo?"
+                });
             }
-        });
-    } else {
-        console.error("❌ No se encontró el elemento #btn-test-rc en el DOM.");
-    }
+        } catch (err) {
+            console.error("❌ Error al mostrar notificación:", err);
+            alert("Error al mostrar notificación: " + err.message);
+        }
+    });
 
     actualizarEstadoPermisos();
     cargarConfig();
