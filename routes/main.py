@@ -1,3 +1,4 @@
+import random
 import time
 from datetime import datetime, date
 from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash
@@ -416,6 +417,83 @@ def eliminar_senal(tag):
             conn.commit()
 
     return redirect(url_for('main.senales'))
+
+import random
+
+# Datos locales para el Entrenador Onírico
+TECNICAS_ONIRICAS = [
+    {
+        "id": "mild",
+        "nombre": "MILD (Mnemonic Induction of Lucid Dreams)",
+        "dificultad": "Principiante",
+        "icono": "fa-brain",
+        "resumen": "Inducción mnemónica repitiendo un mantra antes de dormir.",
+        "pasos": [
+            "Despiértate tras 4-5 horas de sueño y mantente despierto 15 minutos.",
+            "Visualízate volviendo a tu último sueño, pero esta vez dándote cuenta de que estás soñando.",
+            "Repite mentalmente: 'La próxima vez que esté soñando, recordaré que estoy soñando'.",
+            "Mantiene esa intención firme mientras te vuelves a dormir."
+        ]
+    },
+    {
+        "id": "wild",
+        "nombre": "WILD (Wake Initiated Lucid Dreams)",
+        "dificultad": "Avanzado",
+        "icono": "fa-bed",
+        "resumen": "Pasar directamente del estado de vigilia al sueño lúcido sin perder la consciencia.",
+        "pasos": [
+            "Acuéstate completamente relajado tras 5 horas de sueño.",
+            "Mantén la mente alerta mientras tu cuerpo entra en parálisis del sueño y relajación profunda.",
+            "Observa las imágenes hipnagógicas (luces o formas tras los párpados) sin engancharte emocionalmente.",
+            "Permite que la escena del sueño se forme a tu alrededor y entra en ella conscientemente."
+        ]
+    },
+    {
+        "id": "dild",
+        "nombre": "DILD (Dream Initiated Lucid Dreams)",
+        "dificultad": "Intermedio",
+        "icono": "fa-wand-magic-sparkles",
+        "resumen": "Volverse lúcido dentro del sueño al detectar una señal onírica o anomalía.",
+        "pasos": [
+            "Habitúa a tu mente durante el día a cuestionar la realidad (Pruebas de Realidad / Reality Checks).",
+            "Cuando notes algo raro en tu sueño (una señal de tu lista), pregúntate: '¿Estoy soñando?'.",
+            "Realiza una prueba física (mirar tus manos o intentar empujar un dedo a través de tu palma).",
+            "Al confirmar que estás soñando, estabiliza el entorno frotando tus manos."
+        ]
+    }
+]
+
+CONSEJOS_DIARIOS = [
+    "Mantén una libreta o esta app abierta al lado de tu cama. Al despertar, no te muevas durante 30 segundos y rememora las imágenes del sueño.",
+    "Realiza al menos 5 'Pruebas de Realidad' al día: mira tu reloj, aparta la vista y vuelve a mirarlo. Si las horas cambian, estás soñando.",
+    "Evita las pantallas 45 minutos antes de dormir para aumentar tus niveles de melatonina y la claridad de tu fase REM.",
+    "Si te despiertas a medianoche, anota palabras clave de tus sueños antes de volver a dormirte para no perder los detalles al amanecer.",
+    "La firmeza en la intención supera al esfuerzo físico: cree plenamente que hoy tendrás un sueño lúcido antes de cerrar los ojos."
+]
+
+CONSEJOS_HIGIENE = [
+    {"id": "pantallas", "texto": "Sin pantallas 45 min antes de acostarte"},
+    {"id": "horario", "texto": "Irte a dormir a la misma hora"},
+    {"id": "oscuridad", "texto": "Habitación fresca, oscura y silenciosa"},
+    {"id": "cafeina", "texto": "Cero cafeína 6 horas antes de dormir"},
+    {"id": "meditacion", "texto": "5 minutos de respiración profunda en la cama"}
+]
+
+
+# BLOQUE: Rutas para el Entrenador Onírico
+@main_bp.route('/entrenador')
+def entrenador():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    # Seleccionar consejo del día basado en el día actual
+    idx_consejo = random.Random().randint(0, len(CONSEJOS_DIARIOS) - 1)
+    consejo_hoy = CONSEJOS_DIARIOS[idx_consejo]
+
+    return render_template('entrenador.html', 
+                           tecnicas=TECNICAS_ONIRICAS, 
+                           consejo=consejo_hoy,
+                           higienes=CONSEJOS_HIGIENE)
 
 # BLOQUE: Ruta para exportar los sueños a PDF
 @main_bp.route('/exportar')

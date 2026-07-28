@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Entrenador Onírico - Guías y Consejos{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- CABECERA PRINCIPAL CON NAVEGACIÓN -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('main.index') }}" 
+               class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition border border-slate-200 dark:border-slate-700 shadow-sm"
+               title="Volver al Menú Principal">
+                <i class="fa-solid fa-arrow-left text-base"></i>
+            </a>
+            <div>
+                <h1 class="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-indigo-500"></i> Entrenador Onírico
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Aprende las mejores técnicas de lucidez y prepara tu mente antes de dormir.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARJETA: CONSEJO / RECOMENDACIÓN DEL DÍA -->
+    <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-0.5 rounded-2xl shadow-md">
+        <div class="bg-white dark:bg-slate-900 rounded-[15px] p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="p-3 bg-indigo-50 dark:bg-indigo-950/60 rounded-xl text-indigo-600 dark:text-indigo-400 text-2xl shrink-0">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Recomendación Diaria</span>
+                <p class="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 mt-0.5 leading-relaxed">
+                    "{{ consejo }}"
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: GUÍAS DE TÉCNICAS ONÍRICAS -->
+    <div class="space-y-4">
+        <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-book-open text-indigo-500"></i> Guías de Técnicas de Lucidez
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for tec in tecnicas %}
+                <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-indigo-400 transition">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-500/20">
+                                {{ tec.dificultad }}
+                            </span>
+                            <i class="fa-solid {{ tec.icono }} text-slate-400 text-sm"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">
+                            {{ tec.nombre }}
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                            {{ tec.resumen }}
+                        </p>
+                    </div>
+
+                    <!-- Paso a Paso simplificado -->
+                    <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-700/40 text-[11px] space-y-2">
+                        <strong class="block text-[10px] uppercase font-bold text-slate-400">Pasos clave:</strong>
+                        <ol class="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-300">
+                            {% for paso in tec.pasos %}
+                                <li>{{ paso }}</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- SECCIÓN: HIGIENE DEL SUEÑO -->
+    <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-moon text-indigo-500"></i> Checklist de Higiene del Sueño
+            </h2>
+            <span class="text-[10px] text-slate-400 font-semibold uppercase">Lista de hábitos antes de acostarte</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {% for item in higienes %}
+                <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl cursor-pointer hover:border-indigo-400 transition">
+                    <input type="checkbox" class="w-4 h-4 accent-indigo-600 rounded cursor-pointer">
+                    <span class="text-xs text-slate-700 dark:text-slate-200 font-medium">{{ item.texto }}</span>
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
