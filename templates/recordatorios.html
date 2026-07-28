@@ -111,34 +111,71 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    // Registrar Service Worker existente
+    // 1. Registrar Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/static/sw.js')
+            .then(reg => console.log("SW Registrado correctamente:", reg))
             .catch(err => console.error("Error registrando SW:", err));
     }
 
     const banner = document.getElementById('permiso-banner');
-    const btnPermiso = document.getElementById('btn-solicitar-permiso');
     const btnTestRC = document.getElementById('btn-test-rc');
 
-    function actualizarEstadoPermisos() {
-        if (!('Notification' in window)) {
-            banner.innerHTML = "<span>Este navegador no soporta notificaciones.</span>";
-            return;
-        }
-        if (Notification.permission === 'granted') {
-            banner.classList.add('hidden');
-        } else if (Notification.permission === 'denied') {
-            banner.innerHTML = "<span>Las notificaciones están bloqueadas en tu navegador.</span>";
+    // Función unificada para lanzar notificaciones de forma confiable en móviles
+    function dispararNotificacion(titulo, opciones) {
+        if (Notification.permission !== 'granted') return;
+
+        // Intentar a través del Service Worker activo
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'MOSTRAR_NOTIFICACION',
+                titulo: titulo,
+                opciones: opciones
+            });
+        } else if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(titulo, opciones);
+            });
+        } else {
+            // Fallback nativo
+            new Notification(titulo, opciones);
         }
     }
 
-    btnPermiso.addEventListener('click', () => {
-        Notification.requestPermission().then(perm => {
-            actualizarEstadoPermisos();
-        });
-    });
+    // 2. Control del Banner de Permisos
+    function actualizarEstadoPermisos() {
+        if (!banner) return;
 
+        if (!('Notification' in window)) {
+            banner.className = "p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 text-xs flex items-center gap-2";
+            banner.innerHTML = "<i class='fa-solid fa-circle-xmark text-base'></i> Tu navegador no soporta notificaciones.";
+            return;
+        }
+
+        if (Notification.permission === 'granted') {
+            banner.classList.add('hidden');
+        } else if (Notification.permission === 'denied') {
+            banner.className = "p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2";
+            banner.innerHTML = "<i class='fa-solid fa-lock text-base'></i> <span>Notificaciones bloqueadas en tu dispositivo. Actívalas en la configuración de la app/navegador.</span>";
+        } else {
+            banner.className = "p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs flex items-center justify-between gap-4";
+            banner.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bell text-base"></i>
+                    <span>Permite las notificaciones para recibir alertas y Reality Checks.</span>
+                </div>
+                <button id="btn-solicitar-permiso" class="px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">
+                    Activar Notificaciones
+                </button>
+            `;
+
+            document.getElementById('btn-solicitar-permiso')?.addEventListener('click', () => {
+                Notification.requestPermission().then(() => actualizarEstadoPermisos());
+            });
+        }
+    }
+
+    // 3. Cargar y Guardar Preferencias
     const cargarConfig = () => {
         document.getElementById('check-matutino').checked = localStorage.getItem('notif_matutino') === 'true';
         document.getElementById('hora-matutino').value = localStorage.getItem('hora_matutino') || '07:00';
@@ -165,21 +202,21 @@ document.addEventListener("DOMContentLoaded", () => {
         el.addEventListener('change', guardarConfig);
     });
 
-    // Notificación de prueba
-    btnTestRC.addEventListener('click', () => {
+    // 4. Probar Notificación
+    btnTestRC?.addEventListener('click', () => {
         if (Notification.permission === 'granted') {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification("👁️ Reality Check", {
-                    body: "¿Estás soñando ahora mismo? Revisa tus manos o mira un reloj.",
-                    vibrate: [200, 100, 200]
-                });
+            dispararNotificacion("👁️ Reality Check", {
+                body: "¿Estás soñando ahora mismo? Revisa tus manos o mira un reloj.",
+                vibrate: [200, 100, 200],
+                badge: '/static/favicon.ico',
+                icon: '/static/favicon.ico'
             });
         } else {
             alert("Por favor habilita las notificaciones primero.");
         }
     });
 
-    // Bucle para comprobar horas
+    // 5. Bucle de Alarmas y Reality Checks
     setInterval(() => {
         if (Notification.permission !== 'granted') return;
 
@@ -191,22 +228,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Matutino
         if (localStorage.getItem('notif_matutino') === 'true' && localStorage.getItem('hora_matutino') === horaActual) {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification("☀️ ¡Buenos días!", {
-                    body: "No olvides registrar tu sueño antes de que se borre de tu memoria.",
-                    tag: 'matutino'
-                });
+            dispararNotificacion("☀️ ¡Buenos días!", {
+                body: "No olvides registrar tu sueño antes de que se borre de tu memoria.",
+                tag: 'matutino'
             });
         }
 
         // Nocturno
         if (localStorage.getItem('notif_nocturno') === 'true' && localStorage.getItem('hora_nocturno') === horaActual) {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification("🌙 Repaso Nocturno", {
-                    body: "Repasa tus objetivos e intenciones para la noche.",
-                    tag: 'nocturno'
-                });
+            dispararNotificacion("🌙 Repaso Nocturno", {
+                body: "Repasa tus objetivos e intenciones para la noche.",
+                tag: 'nocturno'
             });
+        }
+
+        // Reality Checks
+        if (localStorage.getItem('notif_rc') === 'true') {
+            const frecMinutos = parseInt(localStorage.getItem('frec_rc') || '120', 10);
+            const minutosActuales = (ahora.getHours() * 60) + ahora.getMinutes();
+
+            if (minutosActuales > 0 && minutosActuales % frecMinutos === 0) {
+                dispararNotificacion("👁️ Reality Check", {
+                    body: "¿Estás soñando ahora mismo? Haz una prueba de realidad.",
+                    tag: 'reality-check'
+                });
+            }
         }
     }, 1000);
 
