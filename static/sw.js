@@ -44,6 +44,29 @@ self.addEventListener('fetch', e => {
 // MANEJO DE NOTIFICACIONES Y REALITY CHECKS
 // ==============================================================================
 
+// Escuchar evento PUSH desde el servidor Flask
+self.addEventListener('push', e => {
+  if (!e.data) return;
+
+  try {
+    const data = e.data.json();
+    const options = {
+      body: data.body || 'Tienes un nuevo recordatorio.',
+      icon: data.icon || '/static/icons/icon-192.png',
+      badge: data.badge || '/static/icons/icon-192.png',
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'notificacion-push',
+      data: { url: data.url || '/' }
+    };
+
+    e.waitUntil(
+      self.registration.showNotification(data.title || '👁️ Diario de Sueños', options)
+    );
+  } catch (err) {
+    console.error('Error procesando evento push:', err);
+  }
+});
+
 // Escuchar peticiones enviadas desde el cliente (postMessage)
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'MOSTRAR_NOTIFICACION') {

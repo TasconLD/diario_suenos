@@ -1,8 +1,22 @@
 import os
-from flask import Flask, Response
+import json
+from datetime import datetime
+from flask import Flask, Response, request, jsonify
+from pywebpush import webpush, WebPushException
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from database import inicializar_base_datos
 from routes.auth import auth_bp
 from routes.main import main_bp
+
+# -------------------------------------------------------------
+# CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
+# -------------------------------------------------------------
+VAPID_PUBLIC_KEY = "BDTlrmLtKcEeY7nxJeC8l-C3vbhRFjkrNKattkr2r-V50hbyyiOpPApt0SZcU-vbwjrIw1gpw9cMATaaKdthU34"
+VAPID_PRIVATE_KEY = "SMSBiG1hWPQZyNOBX-uJdgGgCRChOpo8twgEMinGKac"
+VAPID_CLAIMS = {
+    "sub": "mailto:admin@diariosuenos.com"
+}
 
 # BLOQUE: Creación e inicialización de la app Flask
 app = Flask(__name__)
@@ -32,6 +46,100 @@ def serve_sw():
         return response
     else:
         return "Service Worker File Not Found", 404
+
+# ==============================================================================
+# SISTEMA WEB PUSH & SUSCRIPCIONES
+# ==============================================================================
+
+SUBSCRIPTIONS_FILE = os.path.join(app.root_path, 'subscriptions.json')
+
+def cargar_suscripciones():
+    if os.path.exists(SUBSCRIPTIONS_FILE):
+        with open(SUBSCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except Exception:
+                return {}
+    return {}
+
+def guardar_suscripciones(data):
+    with open(SUBSCRIPTIONS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+
+@app.route('/api/subscribe', methods=['POST'])
+def subscribe():
+    data = request.get_json()
+    if not data or 'subscription' not in data:
+        return jsonify({'error': 'Suscripción inválida'}), 400
+
+    subscription = data['subscription']
+    config = data.get('config', {})  # Configuración de horas enviada desde el front
+
+    suscripciones = cargar_suscripciones()
+    
+    # Usar los últimos 20 caracteres del endpoint como ID único del dispositivo
+    endpoint_id = subscription.get('endpoint', '')[-20:]
+    
+    suscripciones[endpoint_id] = {
+        'subscription': subscription,
+        'config': config,
+        'updated_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    
+    guardar_suscripciones(suscripciones)
+    return jsonify({'success': True, 'message': 'Suscripción Web Push registrada con éxito.'})
+
+def enviar_push(subscription_info, titulo, mensaje, tag="general"):
+    try:
+        payload = json.dumps({
+            "title": titulo,
+            "body": mensaje,
+            "tag": tag,
+            "url": "/recordatorios"
+        })
+        webpush(
+            subscription_info=subscription_info,
+            data=payload,
+            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_claims=VAPID_CLAIMS
+        )
+        return True
+    except WebPushException as ex:
+        print(f"❌ Error enviando Push: {ex}")
+        return False
+
+# ==============================================================================
+# PROGRAMADOR DE TAREAS EN SEGUNDO PLANO (APScheduler)
+# ==============================================================================
+
+def verificar_recordatorios():
+    ahora = datetime.now()
+    hora_actual = ahora.strftime("%H:%M")
+    minutos_del_dia = ahora.hour * 60 + ahora.minute
+
+    suscripciones = cargar_suscripciones()
+    for key, item in list(suscripciones.items()):
+        sub = item.get('subscription')
+        cfg = item.get('config', {})
+
+        # 1. Notificación Matutina
+        if cfg.get('notif_matutino') and cfg.get('hora_matutino') == hora_actual:
+            enviar_push(sub, "☀️ ¡Buenos días!", "No olvides registrar tu sueño antes de que se borre de tu memoria.", "matutino")
+
+        # 2. Notificación Nocturna
+        if cfg.get('notif_nocturno') and cfg.get('hora_nocturno') == hora_actual:
+            enviar_push(sub, "🌙 Repaso Nocturno", "Repasa tus objetivos e intenciones antes de dormir.", "nocturno")
+
+        # 3. Reality Checks
+        if cfg.get('notif_rc'):
+            frec = int(cfg.get('frec_rc', 120))
+            if minutos_del_dia > 0 and minutos_del_dia % frec == 0:
+                enviar_push(sub, "👁️ Reality Check", "¿Estás soñando ahora mismo? Revisa tus manos o mira un reloj.", "rc")
+
+# Iniciar el scheduler de segundo plano (revisa cada 1 minuto)
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=verificar_recordatorios, trigger="interval", minutes=1)
+scheduler.start()
 
 # BLOQUE: Arranque del servidor local
 if __name__ == '__main__':
