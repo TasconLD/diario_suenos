@@ -51,7 +51,7 @@ def serve_sw():
 # SISTEMA WEB PUSH & SUSCRIPCIONES
 # ==============================================================================
 
-SUBSCRIPTIONS_FILE = os.path.join(app.root_path, 'subscriptions.json')
+SUBSCRIPTIONS_FILE = '/tmp/subscriptions.json' if os.environ.get('RENDER') else os.path.join(app.root_path, 'subscriptions.json')
 
 def cargar_suscripciones():
     if os.path.exists(SUBSCRIPTIONS_FILE):
@@ -136,7 +136,7 @@ def verificar_recordatorios():
             if minutos_del_dia > 0 and minutos_del_dia % frec == 0:
                 enviar_push(sub, "👁️ Reality Check", "¿Estás soñando ahora mismo? Revisa tus manos o mira un reloj.", "rc")
 
-# Iniciar el scheduler de segundo plano (revisa cada 1 minuto)
+# Iniciar el scheduler de segundo plano
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=verificar_recordatorios, trigger="interval", minutes=1)
 scheduler.start()
