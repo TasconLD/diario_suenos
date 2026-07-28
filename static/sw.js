@@ -1,4 +1,4 @@
-const CACHE_NAME = 'entrenador-onirico-v4';
+const CACHE_NAME = 'entrenador-onirico-v5';
 const assets = [
   '/',
   '/static/manifest.json',
@@ -43,6 +43,16 @@ self.addEventListener('fetch', e => {
 // ==============================================================================
 // MANEJO DE NOTIFICACIONES Y REALITY CHECKS
 // ==============================================================================
+
+// Escuchar peticiones enviadas desde el cliente (postMessage)
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'MOSTRAR_NOTIFICACION') {
+    const { titulo, opciones } = e.data;
+    e.waitUntil(
+      self.registration.showNotification(titulo, opciones)
+    );
+  }
+});
 
 // Al hacer clic en una notificación enviada por el SW
 self.addEventListener('notificationclick', e => {
