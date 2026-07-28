@@ -46,6 +46,18 @@
         <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
             <i class="fa-solid fa-pen-to-square text-indigo-500 dark:text-indigo-400"></i> Interpretación Personal
         </h3>
+
+        <!-- NOTIFICACIÓN DE ÉXITO O ALERTA (FLASH) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs px-3 py-2 rounded-xl mb-4 font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         
         <form action="{{ url_for('main.guardar_senal') }}" method="POST" class="space-y-4">
             <input type="hidden" name="tag" value="{{ senal.tag }}">

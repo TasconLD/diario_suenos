@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, date
-from flask import Blueprint, render_template, request, redirect, url_for, Response, session
+from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 from models import obtener_estadisticas
@@ -32,19 +32,18 @@ def index():
         if categoria_filtro == 'destacado':
             condiciones.append("destacado = TRUE")
         elif categoria_filtro == 'sin_fecha':
-            # Solo muestra los que NO tienen fecha
             condiciones.append("fecha IS NULL")
         else:
             condiciones.append("%s = ANY(SELECT LOWER(c) FROM unnest(categorias) c)")
             parametros.append(categoria_filtro)
-    else:
-        # SI NO HAY FILTRO ACTIVO: Ocultamos los que no tienen fecha para mantener la línea de tiempo limpia
+    # SI NO HAY FILTROS ACTIVOS: Mantenemos la línea de tiempo limpia ocultando recuerdos sin fecha
+    elif not emocion_filtro and not query:
         condiciones.append("fecha IS NOT NULL")
 
-    # Manejo de filtro por emoción (NUEVA LÓGICA SQL)
+    # Manejo de filtro por emoción (FIX: Búsqueda flexible por coincidencia parcial para evitar discrepancias)
     if emocion_filtro:
-        condiciones.append("emocion = %s")
-        parametros.append(emocion_filtro)
+        condiciones.append("TRIM(emocion) ILIKE %s")
+        parametros.append(f"%{emocion_filtro}%")
             
     # Búsqueda por texto
     if query:
@@ -79,7 +78,7 @@ def index():
         suenos=suenos_filtrados, 
         query_busqueda=query, 
         categoria_actual=categoria_filtro,
-        emocion_actual=emocion_filtro, # <-- ENVIAR EMOCIÓN ACTUAL A LA VISTA
+        emocion_actual=emocion_filtro,
         stats=stats,
         usuario_nombre=session['usuario_nombre'],
         fecha_hoy=fecha_hoy
@@ -292,7 +291,113 @@ def guardar_senal():
             """, (usuario_id, tag, significado, categoria))
             conn.commit()
 
-    return redirect(url_for('main.detalle_senal', tag=tag))
+    # FIX BUG 2 (UX): Feedback explícito al usuario para saber que se guardó correctamente
+    flash('¡Interpretación guardada con éxito!', 'exito')
+
+    response = redirect(url_for('main.detalle_senal', tag=tag))
+    
+    # FIX BUG 3 (Caché Móvil / bfcache): Evita que el navegador del celular muestre una versión congelada
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    return response
+
+# BLOQUE: Rutas para Objetivos / Metas Oníricas
+@main_bp.route('/objetivos')
+def objetivos():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+        
+    usuario_id = session['usuario_id']
+
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT * FROM objetivos_oniricos
+                WHERE usuario_id = %s
+                ORDER BY 
+                    CASE prioridad
+                        WHEN 'Alta' THEN 1
+                        WHEN 'Media' THEN 2
+                        WHEN 'Baja' THEN 3
+                        ELSE 4
+                    END,
+                    fecha_creacion DESC;
+            """, (usuario_id,))
+            lista_objetivos = cursor.fetchall()
+
+            for obj in lista_objetivos:
+                if obj.get('fecha_creacion'):
+                    obj['fecha_creacion'] = obj['fecha_creacion'].strftime('%Y-%m-%d')
+
+    return render_template('objetivos.html', objetivos=lista_objetivos)
+
+
+@main_bp.route('/objetivos/crear', methods=['POST'])
+def crear_objetivo():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+    titulo = request.form.get('titulo', '').strip()
+    descripcion = request.form.get('descripcion', '').strip()
+    prioridad = request.form.get('prioridad', 'Media')
+    categoria = request.form.get('categoria', 'Exploración')
+
+    if not titulo:
+        flash('El título del objetivo es obligatorio.', 'error')
+        return redirect(url_for('main.objetivos'))
+
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO objetivos_oniricos (usuario_id, titulo, descripcion, prioridad, categoria)
+                VALUES (%s, %s, %s, %s, %s);
+            """, (usuario_id, titulo, descripcion, prioridad, categoria))
+            conn.commit()
+
+    flash('¡Objetivo creado con éxito! Mucha suerte en tus sueños.', 'exito')
+    return redirect(url_for('main.objetivos'))
+
+
+@main_bp.route('/objetivos/<int:objetivo_id>/cumplir', methods=['POST'])
+def cumplir_objetivo(objetivo_id):
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE objetivos_oniricos
+                SET veces_cumplido = veces_cumplido + 1
+                WHERE id = %s AND usuario_id = %s;
+            """, (objetivo_id, usuario_id))
+            conn.commit()
+
+    flash('🎉 ¡Enhorabuena! Has vuelto a cumplir esta meta onírica.', 'exito')
+    return redirect(url_for('main.objetivos'))
+
+
+@main_bp.route('/objetivos/<int:objetivo_id>/eliminar', methods=['POST'])
+def eliminar_objetivo(objetivo_id):
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                DELETE FROM objetivos_oniricos
+                WHERE id = %s AND usuario_id = %s;
+            """, (objetivo_id, usuario_id))
+            conn.commit()
+
+    flash('Objetivo eliminado correctamente.', 'info')
+    return redirect(url_for('main.objetivos'))
 
 
 # BLOQUE: Eliminar registro de una señal
