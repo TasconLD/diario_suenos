@@ -141,6 +141,23 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(func=verificar_recordatorios, trigger="interval", minutes=1)
 scheduler.start()
 
+#BLOQUE: endpoint temporal de prueba directa
+@app.route('/api/test-push-ahora', methods=['GET'])
+def test_push_ahora():
+    suscripciones = cargar_suscripciones()
+    if not suscripciones:
+        return jsonify({'error': 'No hay ninguna suscripción guardada en el servidor'}), 400
+    
+    enviados = 0
+    for key, item in list(suscripciones.items()):
+        sub = item.get('subscription')
+        if enviar_push(sub, "🚀 PRUEBA DIRECTA", "Si ves esto, las notificaciones Push funcionan 100%", "test"):
+            enviados += 1
+            
+    return jsonify({'success': True, 'enviados': enviados, 'total': len(suscripciones)})
+
+
+
 # BLOQUE: Arranque del servidor local
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
