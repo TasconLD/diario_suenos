@@ -110,7 +110,8 @@
 </div>
 
 <script>
-const PUBLIC_VAPID_KEY = 'BDTlrmLtKcEeY7nxJeC8l-C3vbhRFjkrNKattkr2r-V50hbyyiOpPApt0SZcU-vbwjrIw1gpw9cMATaaKdthU34';
+// Clave VAPID Pública nueva y limpia (coincide exactamente con app.py)
+const PUBLIC_VAPID_KEY = 'BBK-aJ16_XU9Q345oA-n4iX8_n0I7vLqX1u19xI0U197zS9e8t4O4V0O8R2N117f35492t1';
 
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -133,13 +134,17 @@ async function sincronizarPushConServidor() {
         const reg = await navigator.serviceWorker.ready;
         let subscription = await reg.pushManager.getSubscription();
 
-        if (!subscription) {
-            const convertedKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
-            subscription = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: convertedKey
-            });
+        // 🧹 PASO CLAVE: Si ya existía una suscripción (corrupta o con clave anterior), se resetea primero
+        if (subscription) {
+            await subscription.unsubscribe();
         }
+
+        // Crear la nueva suscripción limpia con la VAPID Key actual
+        const convertedKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
+        subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: convertedKey
+        });
 
         const config = {
             notif_matutino: localStorage.getItem('notif_matutino') === 'true',

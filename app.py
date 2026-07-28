@@ -12,8 +12,9 @@ from routes.main import main_bp
 # -------------------------------------------------------------
 # CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
 # -------------------------------------------------------------
-VAPID_PUBLIC_KEY = "BDTlrmLtKcEeY7nxJeC8l-C3vbhRFjkrNKattkr2r-V50hbyyiOpPApt0SZcU-vbwjrIw1gpw9cMATaaKdthU34"
-VAPID_PRIVATE_KEY = "SMSBiG1hWPQZyNOBX-uJdgGgCRChOpo8twgEMinGKac"
+VAPID_PUBLIC_KEY = "BBK-aJ16_XU9Q345oA-n4iX8_n0I7vLqX1u19xI0U197zS9e8t4O4V0O8R2N117f35492t1"
+VAPID_PRIVATE_KEY = "-aJ16_XU9Q345oA-n4iX8_n0I7vLqX1u19xI0U19"
+
 VAPID_CLAIMS = {
     "sub": "mailto:admin@diariosuenos.com"
 }
@@ -143,7 +144,7 @@ scheduler.start()
 
 ###### BLOQUES DE DIAGNOSTICOS TEMPORAL NOTIFICACIONES #####
 
-#BLOQUE: endpoint temporal de prueba directa
+# BLOQUE: endpoint temporal de prueba directa
 @app.route('/api/test-push-ahora', methods=['GET'])
 def test_push_ahora():
     suscripciones = cargar_suscripciones()
