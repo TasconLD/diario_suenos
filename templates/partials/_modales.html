@@ -1,14 +1,33 @@
 <!-- BLOQUE: Modal de registro de sueño nuevo -->
 <div id="modal-registro" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+        
+        <!-- Banner de Restauración de Borrador (Oculto por defecto) -->
+        <div id="banner-borrador" class="hidden bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-amber-600 dark:text-amber-400 text-xs">
+            <span class="flex items-center gap-1.5 font-medium">
+                <i class="fa-solid fa-floppy-disk"></i> Borrador no guardado detectado
+            </span>
+            <div class="flex items-center gap-2">
+                <button type="button" id="btn-restaurar-borrador" class="font-bold underline hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer">Restaurar</button>
+                <span class="opacity-40">|</span>
+                <button type="button" id="btn-descartar-borrador" class="hover:opacity-75 cursor-pointer">Descartar</button>
+            </div>
+        </div>
+
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-feather text-indigo-500"></i> Registrar Sueño</h3>
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">
+                <i class="fa-solid fa-feather text-indigo-500"></i> Registrar Sueño
+                <span id="indicador-autoguardado" class="text-[10px] font-normal text-slate-400 ml-2 hidden">
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald-500"></i> Guardado en borrador
+                </span>
+            </h3>
             <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="{{ url_for('main.registrar') }}" method="POST" class="p-4 space-y-3 text-xs">
+
+        <form id="form-registro-sueno" action="{{ url_for('main.registrar') }}" method="POST" class="p-4 space-y-3 text-xs">
             <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
-                <input type="text" name="titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                <input type="text" name="titulo" id="reg-titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
             </div>
             
             <div class="grid grid-cols-2 gap-3">
@@ -30,7 +49,7 @@
             <div class="grid grid-cols-3 gap-3">
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
-                    <select name="categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <select name="categoria" id="reg-categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                         <option value="Bonito">😊 Bonito</option>
                         <option value="Lucido">✨ Lúcido</option>
                         <option value="Pesadilla">👹 Pesadilla</option>
@@ -41,7 +60,7 @@
                 </div>
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Emoción</label>
-                    <select name="emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <select name="emocion" id="reg-emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                         <option value="">Ninguna</option>
                         <option value="Alegria">😊 Alegría</option>
                         <option value="Miedo">😱 Miedo</option>
@@ -52,18 +71,24 @@
                 </div>
                 <div>
                     <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 a 5)</label>
-                    <input type="number" name="calidad_sueno" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <input type="number" name="calidad_sueno" id="reg-calidad" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
             </div>
 
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
-                <textarea name="descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="block font-bold uppercase text-slate-400 text-[10px]">Relato</label>
+                    <!-- Widget Contador de Palabras y Caracteres -->
+                    <span id="contador-texto" class="text-[10px] font-mono text-slate-400">
+                        0 palabras | 0 caracteres
+                    </span>
+                </div>
+                <textarea name="descripcion" id="reg-descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
             </div>
 
             <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Etiquetas / Tags <span class="text-[9px] font-normal lowercase text-slate-400">(separadas por comas)</span></label>
-                <input type="text" name="tags" placeholder="ej. volar, agua, perro, infancia" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 placeholder:text-slate-500">
+                <input type="text" name="tags" id="reg-tags" placeholder="ej. volar, agua, perro, infancia" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 placeholder:text-slate-500">
             </div>
             
             <div class="flex items-center gap-2">
@@ -78,6 +103,107 @@
         </form>
     </div>
 </div>
+
+<!-- SCRIPT: Lógica de Autoguardado, Contador y Recuperación -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const inputTitulo = document.getElementById('reg-titulo');
+    const inputDescripcion = document.getElementById('reg-descripcion');
+    const inputTags = document.getElementById('reg-tags');
+    const inputCategoria = document.getElementById('reg-categoria');
+    const contadorTexto = document.getElementById('contador-texto');
+    const bannerBorrador = document.getElementById('banner-borrador');
+    const indicadorAutoguardado = document.getElementById('indicador-autoguardado');
+    const formRegistro = document.getElementById('form-registro-sueno');
+
+    let timerDebounce = null;
+    const DRAFT_KEY = 'sueno_borrador_temp';
+
+    // 1. Contador de palabras y caracteres en vivo
+    function actualizarContador() {
+        if (!inputDescripcion) return;
+        const texto = inputDescripcion.value || '';
+        const caracteres = texto.length;
+        const palabras = texto.trim() ? texto.trim().split(/\s+/).filter(Boolean).length : 0;
+        
+        contadorTexto.textContent = `${palabras} palabra${palabras === 1 ? '' : 's'} | ${caracteres} caráctere${caracteres === 1 ? '' : 's'}`;
+    }
+
+    // 2. Autoguardado en LocalStorage (Debounce 1 segundo)
+    function guardarBorrador() {
+        const borrador = {
+            titulo: inputTitulo.value,
+            descripcion: inputDescripcion.value,
+            tags: inputTags.value,
+            categoria: inputCategoria.value,
+            timestamp: new Date().toISOString()
+        };
+
+        // Solo guardar si hay algo escrito
+        if (borrador.titulo.trim() || borrador.descripcion.trim()) {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(borrador));
+            if (indicadorAutoguardado) {
+                indicadorAutoguardado.classList.remove('hidden');
+                setTimeout(() => indicadorAutoguardado.classList.add('hidden'), 2000);
+            }
+        }
+    }
+
+    function programarAutoguardado() {
+        clearTimeout(timerDebounce);
+        timerDebounce = setTimeout(guardarBorrador, 1000);
+    }
+
+    // Escuchar eventos para contador y autoguardado
+    if (inputDescripcion) {
+        inputDescripcion.addEventListener('input', () => {
+            actualizarContador();
+            programarAutoguardado();
+        });
+    }
+
+    if (inputTitulo) inputTitulo.addEventListener('input', programarAutoguardado);
+    if (inputTags) inputTags.addEventListener('input', programarAutoguardado);
+
+    // 3. Recuperar borrador tras caída o cierre involuntario
+    function comprobarBorrador() {
+        const borradorGuardado = localStorage.getItem(DRAFT_KEY);
+        if (borradorGuardado && bannerBorrador) {
+            try {
+                const data = JSON.parse(borradorGuardado);
+                if (data.titulo || data.descripcion) {
+                    bannerBorrador.classList.remove('hidden');
+                }
+            } catch(e) {}
+        }
+    }
+
+    document.getElementById('btn-restaurar-borrador')?.addEventListener('click', () => {
+        const borradorGuardado = localStorage.getItem(DRAFT_KEY);
+        if (borradorGuardado) {
+            const data = JSON.parse(borradorGuardado);
+            if (data.titulo) inputTitulo.value = data.titulo;
+            if (data.descripcion) inputDescripcion.value = data.descripcion;
+            if (data.tags) inputTags.value = data.tags;
+            if (data.categoria) inputCategoria.value = data.categoria;
+            actualizarContador();
+            bannerBorrador.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('btn-descartar-borrador')?.addEventListener('click', () => {
+        localStorage.removeItem(DRAFT_KEY);
+        bannerBorrador.classList.add('hidden');
+    });
+
+    // Al enviar el formulario, limpiar el borrador guardado
+    formRegistro?.addEventListener('submit', () => {
+        localStorage.removeItem(DRAFT_KEY);
+    });
+
+    comprobarBorrador();
+});
+</script>
 
 <!-- BLOQUE: Modal de edición de sueño existente -->
 <div id="modal-edicion" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
