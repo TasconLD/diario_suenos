@@ -3,6 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import obtener_conexion
+from app import oauth
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -32,6 +33,7 @@ def login():
 # BLOQUE: Google OAuth
 @auth_bp.route('/login/google')
 def google_login():
+    from app import oauth
     redirect_uri = url_for('auth.google_authorize', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
