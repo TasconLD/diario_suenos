@@ -11,7 +11,7 @@ def obtener_conexion():
     """Se conecta a PostgreSQL usando DATABASE_URL (Neon en la nube o Render)."""
     return psycopg2.connect(DATABASE_URL)
 
-# BLOQUE: Inicialización de Base de Datos y migración de esquema de Usuarios
+# BLOQUE: Inicialización de Base de Datos y migración de esquema de Usuarios (con OAuth)
 def inicializar_base_datos():
     """Crea las tablas en PostgreSQL si no existen y actualiza columnas pendientes al arrancar."""
     with obtener_conexion() as conn:
@@ -21,7 +21,7 @@ def inicializar_base_datos():
                 CREATE TABLE IF NOT EXISTS usuarios (
                     id SERIAL PRIMARY KEY,
                     usuario VARCHAR(50) UNIQUE NOT NULL,
-                    contrasena TEXT NOT NULL,
+                    contrasena TEXT,
                     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
@@ -40,13 +40,19 @@ def inicializar_base_datos():
                 );
             """)
 
-            # 3. Migración de esquema: Agregar columnas de Email y Verificación si no existen
+            # 3. Migración de esquema: Agregar columnas de Email, Verificación y Google OAuth
             cursor.execute("""
                 ALTER TABLE usuarios 
                 ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE;
                 
                 ALTER TABLE usuarios 
                 ADD COLUMN IF NOT EXISTS email_verificado BOOLEAN DEFAULT FALSE;
+
+                ALTER TABLE usuarios 
+                ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
+
+                ALTER TABLE usuarios 
+                ALTER COLUMN contrasena DROP NOT NULL;
             """)
 
             conn.commit()

@@ -9,6 +9,9 @@ from database import inicializar_base_datos
 from routes.auth import auth_bp
 from routes.main import main_bp
 
+from authlib.integrations.flask_client import OAuth
+
+
 # -------------------------------------------------------------
 # CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
 # -------------------------------------------------------------
@@ -204,6 +207,29 @@ def probar_alarmas_ahora():
         })
 
     return jsonify({'status': 'ok', 'resultados': resultados})
+
+# BLOQUE: Configuración de Authlib (OAuth con Google)
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID', 'dev_client_id'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', 'dev_client_secret'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
+# BLOQUE: Configuración de Authlib en app.py
+from authlib.integrations.flask_client import OAuth
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID', 'dev_client_id'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', 'dev_client_secret'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
 
 
 # BLOQUE: Arranque del servidor local

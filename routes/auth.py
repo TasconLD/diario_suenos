@@ -278,6 +278,8 @@ def reset_password(token):
 
     return render_template('reset_password.html')
 
+
+
 #BLOQUE: Cerrar sesion
 @auth_bp.route('/logout')
 def logout():
