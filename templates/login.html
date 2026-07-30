@@ -49,10 +49,18 @@
             </button>
         </form>
 
-        <p class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
-            ¿No tienes cuenta? 
-            <a href="{{ url_for('auth.registro') }}" class="text-indigo-500 font-semibold hover:underline">Regístrate aquí</a>
-        </p>
+        <!-- BLOQUE: Enlaces del Footer del Login -->
+        <div class="mt-6 text-center text-xs space-y-2">
+            <p class="text-slate-500 dark:text-slate-400">
+                ¿No tienes cuenta? 
+                <a href="{{ url_for('auth.registro') }}" class="text-indigo-500 font-semibold hover:underline">Regístrate aquí</a>
+            </p>
+            <p>
+                <a href="{{ url_for('auth.solicitar_reset') }}" class="text-[11px] text-indigo-500 hover:underline font-medium">
+                    ¿Olvidaste tu contraseña?
+                </a>
+            </p>
+        </div>
     </div>
 </div>
 

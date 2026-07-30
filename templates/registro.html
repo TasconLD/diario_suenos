@@ -19,6 +19,7 @@
         </div>
         {% endif %}
 
+        <!-- BLOQUE: Formulario de Registro (con Email y Ojito Toggle) -->
         <form action="{{ url_for('auth.registro') }}" method="POST" class="space-y-4 text-xs">
             <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Nombre de Usuario</label>
@@ -26,8 +27,18 @@
             </div>
 
             <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Correo Electrónico</label>
+                <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="ejemplo@correo.com">
+            </div>
+
+            <div>
                 <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Contraseña</label>
-                <input type="password" name="contrasena" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+                <div class="relative">
+                    <input type="password" id="input-registro-contrasena" name="contrasena" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 pr-10 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+                    <button type="button" onclick="togglePasswordVisibility('input-registro-contrasena', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1">
+                        <i class="fa-solid fa-eye text-xs"></i>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition shadow-md cursor-pointer">
