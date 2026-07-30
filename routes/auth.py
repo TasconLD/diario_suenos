@@ -32,7 +32,7 @@ def login():
 # BLOQUE: Google OAuth
 @auth_bp.route('/login/google')
 def google_login():
-    redirect_uri = url_for('auth_bp.google_authorize', _external=True)
+    redirect_uri = url_for('auth.google_authorize', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
 @auth_bp.route('/authorize/google')
