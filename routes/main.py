@@ -681,6 +681,57 @@ def vista_recordatorios():
         return redirect(url_for('auth.login'))
     return render_template('recordatorios.html')
 
+#BLOQUE: Ruta del Totem Personal (HTML y API)
+@main_bp.route('/totem')
+def totem():
+    """Ruta para renderizar la vista de configuración del tótem."""
+    return render_template('totem.html')
+
+@main_bp.route('/api/totem', methods=['GET', 'POST'])
+def api_totem():
+    usuario_id = session.get('usuario_id')
+    if not usuario_id:
+        return jsonify({'error': 'No autorizado'}), 401
+
+    conn = obtener_conexion()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    if request.method == 'GET':
+        cur.execute("SELECT * FROM totems WHERE usuario_id = %s", (usuario_id,))
+        totem = cur.fetchone()
+        cur.close()
+        conn.close()
+        return jsonify({'totem': totem})
+
+    if request.method == 'POST':
+        data = request.json or {}
+        nombre = data.get('nombre', 'Mi Tótem')
+        tipo = data.get('tipo', 'frase')
+        frase = data.get('frase', '')
+        sonido = data.get('sonido', '')
+        vibracion = data.get('vibracion', '')
+        imagen = data.get('imagen', '')
+
+        # Insertar o actualizar si ya existe
+        query = """
+            INSERT INTO totems (usuario_id, nombre, tipo, frase, sonido, vibracion, imagen, fecha_actualizacion)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+            ON CONFLICT (usuario_id) DO UPDATE SET
+                nombre = EXCLUDED.nombre,
+                tipo = EXCLUDED.tipo,
+                frase = EXCLUDED.frase,
+                sonido = EXCLUDED.sonido,
+                vibracion = EXCLUDED.vibracion,
+                imagen = EXCLUDED.imagen,
+                fecha_actualizacion = NOW();
+        """
+        cur.execute(query, (usuario_id, nombre, tipo, frase, sonido, vibracion, imagen))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'success': True, 'mensaje': 'Tótem guardado correctamente en Neon DB'})
+    
 # BLOQUE: Ruta para exportar los sueños a PDF
 @main_bp.route('/exportar')
 def exportar():

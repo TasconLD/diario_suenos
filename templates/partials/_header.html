@@ -28,6 +28,12 @@
             <i class="fa-solid fa-bullseye text-[11px]"></i> Objetivos
         </a>
 
+        <!-- BOTÓN TÓTEM PERSONAL -->
+        <a href="{{ url_for('main.totem') }}" 
+           class="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-xs md:text-sm px-3.5 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md">
+            <i class="fa-solid fa-gem text-[11px]"></i> Tótem
+        </a>
+
         <!-- BOTÓN ENTRENADOR ONÍRICO -->
         <a href="{{ url_for('main.entrenador') }}" 
             class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm px-3.5 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md">
@@ -65,7 +71,7 @@
                     {% endif %}">
             <i class="fa-solid fa-bell"></i>
             <span>Recordatorios</span>
-</a>
+        </a>
         
         <a href="{{ url_for('main.exportar') }}" 
                 class="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-sm">
