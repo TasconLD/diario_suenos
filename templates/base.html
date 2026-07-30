@@ -28,6 +28,34 @@
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen font-sans antialiased transition-colors duration-300 relative">
 
+    <!-- BLOQUE: Alertas Flash del Sistema (Notificaciones Flotantes) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="fixed top-5 right-16 z-50 flex flex-col gap-2 max-w-sm w-full px-4 animate-bounce-once">
+          {% for category, message in messages %}
+            <div class="flex items-center justify-between p-4 rounded-xl shadow-xl border text-xs font-semibold backdrop-blur-md transition-all
+                        {% if category == 'error' %}
+                            bg-rose-500/10 dark:bg-rose-950/40 border-rose-500/30 text-rose-600 dark:text-rose-400
+                        {% else %}
+                            bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-600 dark:text-emerald-400
+                        {% endif %}">
+              <div class="flex items-center gap-2.5">
+                {% if category == 'error' %}
+                    <i class="fa-solid fa-circle-exclamation text-base"></i>
+                {% else %}
+                    <i class="fa-solid fa-circle-check text-base"></i>
+                {% endif %}
+                <span>{{ message }}</span>
+              </div>
+              <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <!-- BOTÓN DE TEMA FLOTANTE -->
     <div class="absolute top-4 right-4 z-40">
         <button id="theme-toggle" class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition duration-150 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer">
@@ -41,6 +69,35 @@
 
     <!-- JavaScript Global -->
     <script src="/static/js/main.js"></script>
+
+    <!-- BLOQUE: Script Global para alternar visibilidad de contraseñas (Ojito) -->
+    <script>
+    window.togglePasswordVisibility = function(inputId, btn) {
+        if (window.event) {
+            window.event.preventDefault();
+            window.event.stopPropagation();
+        }
+        
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        
+        const icon = btn.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        } else {
+            input.type = 'password';
+            if (icon) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    };
+    </script>
     
     <!-- Scripts extras opcionales según la página -->
     {% block scripts %}{% endblock %}

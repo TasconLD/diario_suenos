@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, Response, request, jsonify
 from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -27,6 +27,10 @@ app = Flask(__name__)
 
 # Clave secreta para cookies de sesión
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_dificil_de_adivinar_123')
+
+# Configurar duración de la sesión en 30 días cuando se activa "Recordarme"
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # BLOQUE: Inicialización de la base de datos
 inicializar_base_datos()
