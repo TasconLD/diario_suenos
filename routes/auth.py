@@ -29,7 +29,46 @@ def login():
                     return render_template('login.html', error="Usuario o contraseña incorrectos")
                     
     return render_template('login.html')
+# BLOQUE: Google OAuth
+@auth_bp.route('/login/google')
+def google_login():
+    redirect_uri = url_for('auth_bp.google_authorize', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
 
+@auth_bp.route('/authorize/google')
+def google_authorize():
+    token = oauth.google.authorize_access_token()
+    user_info = token.get('userinfo')
+    
+    if not user_info:
+        return render_template('login.html', error="Error al obtener datos de Google.")
+    
+    email = user_info['email']
+    nombre = user_info.get('name', email.split('@')[0])
+    
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # Buscar si el usuario ya existe por email o usuario
+            cursor.execute("SELECT * FROM usuarios WHERE usuario = %s;", (email,))
+            user = cursor.fetchone()
+            
+            if not user:
+                # Si no existe, lo creamos automáticamente
+                import secrets
+                random_password = generate_password_hash(secrets.token_hex(16))
+                cursor.execute(
+                    "INSERT INTO usuarios (usuario, contrasena) VALUES (%s, %s) RETURNING id;",
+                    (email, random_password)
+                )
+                user_id = cursor.fetchone()['id']
+                conn.commit()
+            else:
+                user_id = user['id']
+                
+            session['usuario_id'] = user_id
+            session['usuario_nombre'] = email
+            
+    return redirect(url_for('main.index'))
 # BLOQUE: Procesamiento de Registro con captura de Email
 @auth_bp.route('/registro', methods=['GET', 'POST'])
 def registro():
