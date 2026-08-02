@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, render_template, redirect, url_for, session, flash
 from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -230,6 +230,11 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
+# BLOQUE: Ruta de respaldo Offline para la PWA
+@app.route('/offline')
+def offline():
+    """Muestra la vista de cortesía cuando el usuario no tiene conexión a internet."""
+    return render_template('offline.html')
 
 # BLOQUE: Arranque del servidor local
 if __name__ == '__main__':
