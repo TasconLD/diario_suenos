@@ -10,26 +10,26 @@ from routes.auth import auth_bp
 from routes.main import main_bp
 
 from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
 
+
+# Cargar variables de entorno al iniciar la app
+load_dotenv()
 
 # -------------------------------------------------------------
 # CONFIGURACIÓN DE CLAVES VAPID (WEB PUSH)
 # -------------------------------------------------------------
-VAPID_PUBLIC_KEY = "BOhdHbRniwliKrGfNXASKf1cz4pifHUbmu1r1emJvDQkTR-Sy0B-s0oko6VxIr4kyebdSZioJtJxX1UW4M2PYOM"
-VAPID_PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgE1IImjJTSY/dbnEs
-has0AxSiYpHuFC9qVcie+O76LB+hRANCAAToXR20Z4sJYiqxnzVwEin9XM+KYnx1
-G5rta9Xpibw0JE0fkstAfrNKJKOlcSK+JMnm3UmYqCbScV9VFuDNj2Dj
------END PRIVATE KEY-----"""
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY")
 
 VAPID_CLAIMS = {
-    "sub": "mailto:admin@diariosuenos.com"
+    "sub": os.environ.get("VAPID_MAILTO", "mailto:admin@diariosuenos.com")
 }
 # BLOQUE: Creación e inicialización de la app Flask
 app = Flask(__name__)
 
 # Clave secreta para cookies de sesión
-app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_dificil_de_adivinar_123')
+app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key_change_in_production')
 
 # Configurar duración de la sesión en 30 días cuando se activa "Recordarme"
 from datetime import timedelta
@@ -209,12 +209,11 @@ def probar_alarmas_ahora():
     return jsonify({'status': 'ok', 'resultados': resultados})
 
 # BLOQUE: Configuración de Authlib (OAuth con Google)
-
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id=os.environ.get('GOOGLE_CLIENT_ID', 'dev_client_id'),
-    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', 'dev_client_secret'),
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )

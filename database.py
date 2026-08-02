@@ -1,14 +1,17 @@
 import os
 import psycopg2
+from dotenv import load_dotenv
 
-# URL de Neon (tu base de datos en la nube)
-DATABASE_URL = os.environ.get(
-    'DATABASE_URL',
-    'postgresql://neondb_owner:npg_bypqGueDk1v2@ep-odd-shape-awnugcx6-pooler.c-12.us-east-1.aws.neon.tech/neondb?sslmode=require'
-)
+# Cargar variables de entorno
+load_dotenv()
+
+# URL de la base de datos (PostgreSQL)
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def obtener_conexion():
-    """Se conecta a PostgreSQL usando DATABASE_URL (Neon en la nube o Render)."""
+    """Se conecta a PostgreSQL usando DATABASE_URL."""
+    if not DATABASE_URL:
+        raise ValueError("Error: La variable de entorno DATABASE_URL no está configurada.")
     return psycopg2.connect(DATABASE_URL)
 
 # BLOQUE: Inicialización de Base de Datos y migración de esquema de Usuarios (con OAuth)
