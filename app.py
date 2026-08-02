@@ -1,8 +1,7 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import Flask, Response, request, jsonify, render_template, redirect, url_for, session, flash
-from pywebpush import webpush, WebPushException
+from flask import Flask, Response, request, jsonify, render_template, send_from_directory 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import inicializar_base_datos
@@ -12,6 +11,7 @@ from routes.main import main_bp
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 
+from pywebpush import webpush, WebPushException
 
 # Cargar variables de entorno al iniciar la app
 load_dotenv()
@@ -235,6 +235,10 @@ google = oauth.register(
 def offline():
     """Muestra la vista de cortesía cuando el usuario no tiene conexión a internet."""
     return render_template('offline.html')
+
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
 # BLOQUE: Arranque del servidor local
 if __name__ == '__main__':
