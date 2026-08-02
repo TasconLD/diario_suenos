@@ -94,7 +94,7 @@
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/static/js/sw.js').then((reg) => {
+            navigator.serviceWorker.register('/static/sw.js').then((reg) => {
                 // Detectar si hay una nueva versión esperando
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
