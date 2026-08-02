@@ -1,13 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+# BLOQUE: Imports y Configuración
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import obtener_conexion
-
+from itsdangerous import URLSafeTimedSerializer
+from services.email_service import EmailService
 
 auth_bp = Blueprint('auth', __name__)
 
-#BLOQUE: Login
+# BLOQUE: Login
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -30,6 +32,7 @@ def login():
                     return render_template('login.html', error="Usuario o contraseña incorrectos")
                     
     return render_template('login.html')
+
 # BLOQUE: Google OAuth
 @auth_bp.route('/login/google')
 def google_login():
@@ -51,17 +54,15 @@ def google_authorize():
     
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            # Buscar si el usuario ya existe por email o usuario
             cursor.execute("SELECT * FROM usuarios WHERE usuario = %s;", (email,))
             user = cursor.fetchone()
             
             if not user:
-                # Si no existe, lo creamos automáticamente
                 import secrets
                 random_password = generate_password_hash(secrets.token_hex(16))
                 cursor.execute(
-                    "INSERT INTO usuarios (usuario, contrasena) VALUES (%s, %s) RETURNING id;",
-                    (email, random_password)
+                    "INSERT INTO usuarios (usuario, email, contrasena, email_verificado) VALUES (%s, %s, %s, TRUE) RETURNING id;",
+                    (email, email, random_password)
                 )
                 user_id = cursor.fetchone()['id']
                 conn.commit()
@@ -72,7 +73,8 @@ def google_authorize():
             session['usuario_nombre'] = email
             
     return redirect(url_for('main.index'))
-# BLOQUE: Procesamiento de Registro con captura de Email
+
+# BLOQUE: Registro de usuarios
 @auth_bp.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
@@ -80,7 +82,6 @@ def registro():
         email = request.form.get('email')
         contrasena = request.form.get('contrasena')
 
-        # Validar que no falten campos
         if not usuario or not email or not contrasena:
             return render_template('registro.html', error="Todos los campos son obligatorios.")
 
@@ -89,7 +90,6 @@ def registro():
         try:
             with obtener_conexion() as conn:
                 with conn.cursor() as cursor:
-                    # Verificar si el usuario o el email ya existen
                     cursor.execute(
                         "SELECT id FROM usuarios WHERE usuario = %s OR email = %s;",
                         (usuario, email)
@@ -97,14 +97,18 @@ def registro():
                     if cursor.fetchone():
                         return render_template('registro.html', error="El nombre de usuario o el correo ya están registrados.")
 
-                    # Insertar nuevo usuario con email
                     cursor.execute(
                         "INSERT INTO usuarios (usuario, email, contrasena, email_verificado) VALUES (%s, %s, %s, FALSE);",
                         (usuario, email, contrasena_hash)
                     )
                     conn.commit()
+
+            # Envío de correo de confirmación
+            token = generar_token_verificacion(email)
+            url_confirmacion = url_for('auth.confirmar_email', token=token, _external=True)
+            EmailService.enviar_correo_verificacion(email, url_confirmacion)
             
-            flash('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.', 'success')
+            flash('¡Cuenta creada exitosamente! Se ha enviado un correo para verificar tu cuenta.', 'success')
             return redirect(url_for('auth.login'))
 
         except Exception as e:
@@ -113,7 +117,7 @@ def registro():
 
     return render_template('registro.html')
 
-#BLOQUE: Cambiar contraseña desde modal
+# BLOQUE: Cambiar contraseña desde sesión activa
 @auth_bp.route('/cambiar-contrasena', methods=['POST'])
 def cambiar_contrasena():
     if 'usuario_id' not in session:
@@ -126,7 +130,6 @@ def cambiar_contrasena():
 
     destino_redirect = request.referrer or url_for('main.index')
 
-    # Validar coincidencia de nuevas contraseñas
     if contrasena_nueva != contrasena_confirmar:
         flash('Las contraseñas nuevas no coinciden.', 'error')
         return redirect(destino_redirect)
@@ -136,12 +139,10 @@ def cambiar_contrasena():
             cursor.execute("SELECT contrasena FROM usuarios WHERE id = %s;", (usuario_id,))
             user = cursor.fetchone()
             
-            # Validar si la contraseña actual es correcta
             if not user or not check_password_hash(user['contrasena'], contrasena_actual):
                 flash('La contraseña actual es incorrecta.', 'error')
                 return redirect(destino_redirect)
 
-            # Si todo está bien, actualizar
             nueva_encriptada = generate_password_hash(contrasena_nueva)
             cursor.execute(
                 "UPDATE usuarios SET contrasena = %s WHERE id = %s;", 
@@ -152,65 +153,20 @@ def cambiar_contrasena():
     flash('¡Contraseña actualizada con éxito!', 'success')
     return redirect(destino_redirect)
 
-# BLOQUE: Lógica de Verificación de Correo y Tokens
-from itsdangerous import URLSafeTimedSerializer
-from flask import current_app
-import smtplib
-from email.mime.text import MIMEText
-
+# BLOQUE: Tokens de Verificación de Email
 def generar_token_verificacion(email):
-    """Genera un token cifrado con el email del usuario."""
     serializer = URLSafeTimedSerializer(current_app.secret_key)
     return serializer.dumps(email, salt='email-confirm-salt')
 
-def confirmar_token_verificacion(token, max_age=86400):  # Token válido por 24 horas (86400 seg)
-    """Decodifica el token y retorna el email si no ha expirado."""
+def confirmar_token_verificacion(token, max_age=86400):  # 24 horas
     serializer = URLSafeTimedSerializer(current_app.secret_key)
     try:
-        email = serializer.loads(token, salt='email-confirm-salt', max_age=max_age)
-        return email
+        return serializer.loads(token, salt='email-confirm-salt', max_age=max_age)
     except Exception:
         return None
 
-def enviar_correo_verificacion(email, token):
-    """Envía el correo con la URL de confirmación usando las variables SMTP de la App."""
-    url_confirmacion = url_for('auth.confirmar_email', token=token, _external=True)
-    
-    mensaje = MIMEText(f"""
-    ¡Hola!
-
-    Gracias por registrarte en Entrenador Onírico. 
-    Por favor confirma tu correo electrónico haciendo clic en el siguiente enlace:
-
-    {url_confirmacion}
-
-    Este enlace expirará en 24 horas. Si no creaste esta cuenta, puedes ignorar este mensaje.
-    """)
-    mensaje['Subject'] = 'Confirma tu correo - Entrenador Onírico'
-    mensaje['From'] = current_app.config.get('MAIL_DEFAULT_SENDER', 'no-reply@entrenadoronirico.com')
-    mensaje['To'] = email
-
-    try:
-        server_host = current_app.config.get('MAIL_SERVER')
-        server_port = current_app.config.get('MAIL_PORT', 587)
-        mail_user = current_app.config.get('MAIL_USERNAME')
-        mail_pass = current_app.config.get('MAIL_PASSWORD')
-
-        if server_host and mail_user and mail_pass:
-            with smtplib.SMTP(server_host, server_port) as server:
-                server.starttls()
-                server.login(mail_user, mail_pass)
-                server.send_message(mensaje)
-            print(f"--> Correo de verificación enviado con éxito a: {email}")
-        else:
-            print(f"\n[MODO DEV] Enlace de confirmación para {email}:\n{url_confirmacion}\n")
-    except Exception as e:
-        print(f"Error al enviar correo de verificación: {e}")
-
-
 @auth_bp.route('/confirmar-email/<token>')
 def confirmar_email(token):
-    """Ruta a la que llega el usuario al hacer clic en el enlace del correo."""
     email = confirmar_token_verificacion(token)
     if not email:
         flash('El enlace de verificación es inválido o ha expirado.', 'error')
@@ -232,12 +188,12 @@ def confirmar_email(token):
 
     return redirect(url_for('auth.login'))
 
-# BLOQUE: Rutas de Recuperación de Contraseña
+# BLOQUE: Tokens y Rutas de Recuperación de Contraseña
 def generar_token_reset(email):
     serializer = URLSafeTimedSerializer(current_app.secret_key)
     return serializer.dumps(email, salt='reset-password-salt')
 
-def confirmar_token_reset(token, max_age=3600):  # Válido por 1 hora (3600 seg)
+def confirmar_token_reset(token, max_age=3600):  # 1 hora
     serializer = URLSafeTimedSerializer(current_app.secret_key)
     try:
         return serializer.loads(token, salt='reset-password-salt', max_age=max_age)
@@ -247,47 +203,21 @@ def confirmar_token_reset(token, max_age=3600):  # Válido por 1 hora (3600 seg)
 @auth_bp.route('/solicitar-reset', methods=['GET', 'POST'])
 def solicitar_reset():
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = (request.form.get('email') or '').strip().lower()
         
-        with obtener_conexion() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT id FROM usuarios WHERE email = %s;", (email,))
-                usuario = cursor.fetchone()
+        if email:
+            with obtener_conexion() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT id FROM usuarios WHERE email = %s;", (email,))
+                    usuario = cursor.fetchone()
 
-        if usuario:
-            token = generar_token_reset(email)
-            url_reset = url_for('auth.reset_password', token=token, _external=True)
-            
-            # Construir correo de restablecimiento
-            mensaje = MIMEText(f"""
-            Has solicitado restablecer tu contraseña en Entrenador Onírico.
-            
-            Haz clic en el siguiente enlace para crear una nueva contraseña:
-            {url_reset}
-            
-            Si no solicitaste este cambio, ignora este correo. El enlace expira en 1 hora.
-            """)
-            mensaje['Subject'] = 'Restablecer Contraseña - Entrenador Onírico'
-            mensaje['From'] = current_app.config.get('MAIL_DEFAULT_SENDER', 'no-reply@entrenadoronirico.com')
-            mensaje['To'] = email
+            # Si el usuario existe, generamos el token y enviamos el correo
+            if usuario:
+                token = generar_token_reset(email)
+                url_reset = url_for('auth.reset_password', token=token, _external=True)
+                EmailService.enviar_correo_restablecimiento(email, url_reset)
 
-            try:
-                server_host = current_app.config.get('MAIL_SERVER')
-                server_port = current_app.config.get('MAIL_PORT', 587)
-                mail_user = current_app.config.get('MAIL_USERNAME')
-                mail_pass = current_app.config.get('MAIL_PASSWORD')
-
-                if server_host and mail_user and mail_pass:
-                    with smtplib.SMTP(server_host, server_port) as server:
-                        server.starttls()
-                        server.login(mail_user, mail_pass)
-                        server.send_message(mensaje)
-                else:
-                    print(f"\n[MODO DEV] Enlace Reset para {email}:\n{url_reset}\n")
-            except Exception as e:
-                print(f"Error enviando email reset: {e}")
-
-        # Mensaje de seguridad ambiguo para no revelar si el correo existe o no
+        # Mensaje de seguridad uniforme contra enumeración de correos
         flash('Si el correo está registrado, recibirás un enlace de recuperación.', 'success')
         return redirect(url_for('auth.login'))
 
@@ -320,9 +250,7 @@ def reset_password(token):
 
     return render_template('reset_password.html')
 
-
-
-#BLOQUE: Cerrar sesion
+# BLOQUE: Logout
 @auth_bp.route('/logout')
 def logout():
     session.clear()
