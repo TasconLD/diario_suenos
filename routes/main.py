@@ -155,14 +155,18 @@ def index():
 
             # 4. Tendencia mensual
             cursor.execute("""
+                SELECT mes, cantidad
+                    FROM (
                 SELECT 
                     TO_CHAR(fecha, 'YYYY-MM') as mes, 
                     COUNT(*) as cantidad
                 FROM suenos
                 WHERE usuario_id = %s AND fecha IS NOT NULL
                 GROUP BY TO_CHAR(fecha, 'YYYY-MM')
-                ORDER BY mes ASC
-                LIMIT 12;
+                ORDER BY mes DESC
+                LIMIT 12
+                ) sub
+                ORDER BY mes ASC;
             """, (usuario_id,))
             tendencia_mensual = cursor.fetchall() or []
 
