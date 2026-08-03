@@ -1,38 +1,49 @@
 // BLOQUE: Service Worker PWA con Precaché Completo de Rutas
-const CACHE_NAME = 'entrenador-onirico-v10';
+const CACHE_NAME = 'entrenador-onirico-v8';
 
-// Recursos esenciales para iniciar la aplicación sin conexión
+// Todas las rutas de la aplicación para precachear
 const STATIC_ASSETS = [
-    '/',
-    '/offline',
-    '/static/manifest.json',
-    '/static/js/main.js'
+  '/',
+  '/offline',
+  '/login',
+  '/registro',
+  '/senales',
+  '/objetivos',
+  '/entrenador',
+  '/mapa',
+  '/recordatorios',
+  '/totem',
+  '/static/manifest.json',
+  '/static/sw.js',
+  '/static/js/main.js',
+  '/static/icon-192.png',
+  '/static/icon-512.png',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
 // Instalar SW y precachear de forma tolerante a fallos
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-
   e.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-
-      // Guardar recursos críticos de la aplicación
+      // 1. Guardar recursos locales y librerías seguras
       for (const asset of STATIC_ASSETS) {
         try {
-          const response = await fetch(asset);
-
-          if (response.ok) {
-            await cache.put(asset, response);
-            console.log(`[SW] Recurso precacheado: ${asset}`);
-          } else {
-            console.warn(`[SW] Respuesta inválida al guardar: ${asset}`);
-          }
-
+          await cache.add(asset);
         } catch (err) {
           console.warn(`[SW] No se pudo precachear la ruta: ${asset}`, err);
         }
       }
-
+      
+      // 2. Precachear Tailwind CDN en modo no-cors (evita bloqueos CORS)
+      try {
+        const tailwindReq = new Request('https://cdn.tailwindcss.com', { mode: 'no-cors' });
+        const response = await fetch(tailwindReq);
+        await cache.put(tailwindReq, response);
+      } catch (err) {
+        console.warn('[SW] No se pudo precachear Tailwind CDN:', err);
+      }
     })
   );
 });
