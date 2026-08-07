@@ -21,7 +21,7 @@ def login():
         
         with obtener_conexion() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("SELECT * FROM usuarios WHERE usuario = %s;", (nombre_usuario,))
+                cursor.execute("SELECT * FROM usuarios WHERE usuario = %s OR email = %s;", (nombre_usuario, nombre_usuario))
                 user = cursor.fetchone()
                 
                 if user and check_password_hash(user['contrasena'], contrasena):
@@ -33,12 +33,12 @@ def login():
                     
     return render_template('login.html')
 
-# BLOQUE: Google OAuth
+# BLOQUE: Google OAuth (Login, Vinculación e Inicio Único)
 @auth_bp.route('/login/google')
 def google_login():
     from app import oauth
     redirect_uri = url_for('auth.google_authorize', _external=True)
-    return oauth.google.authorize_redirect(redirect_uri)
+    return oauth.google.authorize_redirect(redirect_uri, prompt='select_account')
 
 @auth_bp.route('/authorize/google')
 def google_authorize():
@@ -47,32 +47,91 @@ def google_authorize():
     user_info = token.get('userinfo')
     
     if not user_info:
-        return render_template('login.html', error="Error al obtener datos de Google.")
+        flash("Error al obtener datos de Google.", "error")
+        return redirect(url_for('auth.login'))
     
+    google_sub = user_info['sub']
     email = user_info['email']
-    nombre = user_info.get('name', email.split('@')[0])
-    
+
+    # CASO 1: El usuario ya tiene la sesión iniciada -> Quiere VINCULAR su cuenta con Google
+    if 'usuario_id' in session:
+        usuario_id = session['usuario_id']
+        with obtener_conexion() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT id FROM usuarios WHERE google_id = %s AND id != %s;", (google_sub, usuario_id))
+                existente = cursor.fetchone()
+                if existente:
+                    flash('Esta cuenta de Google ya está vinculada a otro usuario.', 'error')
+                    return redirect(url_for('main.index'))
+
+                cursor.execute("UPDATE usuarios SET google_id = %s WHERE id = %s;", (google_sub, usuario_id))
+                conn.commit()
+
+        flash('¡Cuenta de Google vinculada con éxito!', 'success')
+        return redirect(url_for('main.index'))
+
+    # CASO 2: El usuario NO ha iniciado sesión -> Quiere HACER LOGIN con Google
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT * FROM usuarios WHERE usuario = %s;", (email,))
+            cursor.execute("SELECT * FROM usuarios WHERE google_id = %s;", (google_sub,))
             user = cursor.fetchone()
-            
+
+            if not user:
+                cursor.execute("SELECT * FROM usuarios WHERE email = %s;", (email,))
+                user = cursor.fetchone()
+
+                if user:
+                    cursor.execute("UPDATE usuarios SET google_id = %s, email_verificado = TRUE WHERE id = %s;", (google_sub, user['id']))
+                    conn.commit()
+
             if not user:
                 import secrets
                 random_password = generate_password_hash(secrets.token_hex(16))
                 cursor.execute(
-                    "INSERT INTO usuarios (usuario, email, contrasena, email_verificado) VALUES (%s, %s, %s, TRUE) RETURNING id;",
-                    (email, email, random_password)
+                    "INSERT INTO usuarios (usuario, email, contrasena, email_verificado, google_id) VALUES (%s, %s, %s, TRUE, %s) RETURNING id, usuario;",
+                    (email, email, random_password, google_sub)
                 )
-                user_id = cursor.fetchone()['id']
+                user = cursor.fetchone()
                 conn.commit()
-            else:
-                user_id = user['id']
-                
-            session['usuario_id'] = user_id
-            session['usuario_nombre'] = email
-            
+
+            session['usuario_id'] = user['id']
+            session['usuario_nombre'] = user['usuario']
+
     return redirect(url_for('main.index'))
+
+# BLOQUE: Desvinculación de Proveedores OAuth
+@auth_bp.route('/desvincular/<proveedor>', methods=['POST'])
+def desvincular_oauth(proveedor):
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+    destino_redirect = request.referrer or url_for('main.index')
+
+    if proveedor != 'google':
+        flash('Proveedor no válido o no soportado.', 'error')
+        return redirect(destino_redirect)
+
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT contrasena, google_id FROM usuarios WHERE id = %s;", (usuario_id,))
+            user = cursor.fetchone()
+
+            if not user or not user['google_id']:
+                flash('No hay ninguna cuenta de Google vinculada.', 'error')
+                return redirect(destino_redirect)
+
+            # Seguridad: Impedir la desvinculación si el usuario no tiene una contraseña funcional configurada
+            # (evita que la cuenta quede bloqueada e inaccesible).
+            if not user['contrasena']:
+                flash('Debes establecer una contraseña antes de desvincular tu cuenta de Google.', 'error')
+                return redirect(destino_redirect)
+
+            cursor.execute("UPDATE usuarios SET google_id = NULL WHERE id = %s;", (usuario_id,))
+            conn.commit()
+
+    flash('¡Cuenta de Google desvinculada con éxito!', 'success')
+    return redirect(destino_redirect)
 
 # BLOQUE: Registro de usuarios
 @auth_bp.route('/registro', methods=['GET', 'POST'])
@@ -211,13 +270,11 @@ def solicitar_reset():
                     cursor.execute("SELECT id FROM usuarios WHERE email = %s;", (email,))
                     usuario = cursor.fetchone()
 
-            # Si el usuario existe, generamos el token y enviamos el correo
             if usuario:
                 token = generar_token_reset(email)
                 url_reset = url_for('auth.reset_password', token=token, _external=True)
                 EmailService.enviar_correo_restablecimiento(email, url_reset)
 
-        # Mensaje de seguridad uniforme contra enumeración de correos
         flash('Si el correo está registrado, recibirás un enlace de recuperación.', 'success')
         return redirect(url_for('auth.login'))
 

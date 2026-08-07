@@ -8,6 +8,7 @@ load_dotenv()
 # URL de la base de datos (PostgreSQL)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
+
 def obtener_conexion():
     """Se conecta a PostgreSQL usando DATABASE_URL."""
     if not DATABASE_URL:

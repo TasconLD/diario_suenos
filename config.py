@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 class Config:
     # Flask App Config
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_secret_key_change_in_production')
