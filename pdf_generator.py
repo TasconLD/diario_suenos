@@ -5,7 +5,9 @@ from fpdf.enums import XPos, YPos
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from models import cargar_datos, cargar_datos_filtrados
+from models import cargar_datos, cargar_datos_filtrados, obtener_estadisticas
+from database import obtener_conexion
+from psycopg2.extras import RealDictCursor
 
 # BLOQUE: Generación del PDF básico (reporte plano de todos los sueños)
 def generar_pdf_suenos(usuario_id, usuario_nombre):
@@ -377,5 +379,279 @@ def generar_pdf_diario_formateado(usuario_id, usuario_nombre, fecha_inicio=None,
 
     if img_buf:
         img_buf.close()
+
+    return pdf_output
+
+# BLOQUE: Generación de PDF de Reporte de Estadísticas Generales
+def generar_pdf_estadisticas(usuario_id, usuario_nombre):
+    """
+    Genera un PDF con el resumen ejecutivo de estadísticas del usuario:
+    métricas clave y distribución de emociones.
+    """
+    stats = obtener_estadisticas(usuario_id) or {}
+    total = stats.get('total', 0)
+    
+    # Mapeo de emociones desde el query de models.py
+    conteos_emociones = {
+        'Alegría': stats.get('emocion_alegria', 0),
+        'Tristeza': stats.get('emocion_tristeza', 0),
+        'Miedo': stats.get('emocion_miedo', 0),
+        'Confusión': stats.get('emocion_confusion', 0),
+        'Neutro': stats.get('emocion_neutro', 0)
+    }
+    
+    img_buf_emociones = _generar_grafica_dona(conteos_emociones) if sum(conteos_emociones.values()) > 0 else None
+
+    class PDFStats(FPDF):
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(148, 163, 184)
+            self.cell(0, 10, f"Página {self.page_no()}", align="C")
+
+    pdf = PDFStats()
+    pdf.set_margins(20, 20, 20)
+    pdf.add_page()
+
+    # Cabecera / Título
+    pdf.set_y(20)
+    pdf.set_font("Helvetica", "B", 22)
+    pdf.set_text_color(79, 70, 229)
+    pdf.cell(0, 12, "Reporte de Estadísticas Oníricas", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "", 12)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(0, 8, _limpiar_texto(usuario_nombre), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 6, f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')}", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.ln(8)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+    pdf.ln(8)
+
+    # Métricas Clave
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.set_text_color(30, 41, 59)
+    pdf.cell(0, 8, "Métricas Generales", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(51, 65, 85)
+    
+    col_w = 85
+    pdf.cell(col_w, 8, _limpiar_texto(f"• Total de Sueños Registrados: {total}"), ln=0)
+    pdf.cell(col_w, 8, _limpiar_texto(f"• Sueños Lúcidos: {stats.get('lucidos', 0)}"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.cell(col_w, 8, _limpiar_texto(f"• Pesadillas: {stats.get('pesadillas', 0)}"), ln=0)
+    pdf.cell(col_w, 8, _limpiar_texto(f"• Calidad Promedio: {stats.get('promedio', 0.0)}/5"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.ln(10)
+
+    # Gráfica de Emociones
+    if img_buf_emociones:
+        pdf.set_font("Helvetica", "B", 13)
+        pdf.set_text_color(30, 41, 59)
+        pdf.cell(0, 8, "Distribución Emocional", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        
+        y_grafica = pdf.get_y() + 4
+        pdf.image(img_buf_emociones, x=65, y=y_grafica, w=80)
+        pdf.set_y(y_grafica + 85)
+
+    pdf_buffer = io.BytesIO()
+    pdf.output(pdf_buffer)
+    pdf_output = pdf_buffer.getvalue()
+    pdf_buffer.close()
+
+    if img_buf_emociones:
+        img_buf_emociones.close()
+
+    return pdf_output
+
+
+# BLOQUE: Generación de PDF de Reporte de Señales Oníricas
+def generar_pdf_senales(usuario_id, usuario_nombre):
+    """
+    Genera un PDF con el inventario de Señales Oníricas del usuario.
+    """
+    senales = []
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT * FROM senales_oniricas 
+                WHERE usuario_id = %s 
+                ORDER BY frecuencia DESC, nombre ASC;
+            """, (usuario_id,))
+            senales = cursor.fetchall()
+
+    class PDFSenales(FPDF):
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(148, 163, 184)
+            self.cell(0, 10, f"Página {self.page_no()}", align="C")
+
+    pdf = PDFSenales()
+    pdf.set_margins(20, 20, 20)
+    pdf.add_page()
+
+    # Encabezado
+    pdf.set_y(20)
+    pdf.set_font("Helvetica", "B", 22)
+    pdf.set_text_color(79, 70, 229)
+    pdf.cell(0, 12, "Catálogo de Señales Oníricas", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "", 12)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(0, 8, _limpiar_texto(usuario_nombre), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 6, f"Total de señales registradas: {len(senales)}  |  Generado el {datetime.now().strftime('%d/%m/%Y')}", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.ln(8)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+    pdf.ln(8)
+
+    if not senales:
+        pdf.set_font("Helvetica", "I", 11)
+        pdf.set_text_color(100, 116, 139)
+        pdf.cell(0, 10, "No se encontraron señales oníricas registradas aún.", align="C")
+    else:
+        for s in senales:
+            if pdf.get_y() > 240:
+                pdf.add_page()
+
+            pdf.set_font("Helvetica", "B", 14)
+            pdf.set_text_color(15, 23, 42)
+            pdf.cell(0, 8, _limpiar_texto(f"• {s.get('nombre', 'Sin Nombre')}"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            pdf.set_font("Helvetica", "I", 9)
+            pdf.set_text_color(99, 102, 241)
+            frecuencia = s.get('frecuencia', 1)
+            cat_txt = s.get('categoria', 'General')
+            pdf.cell(0, 5, _limpiar_texto(f"Categoría: {cat_txt}  |  Apariciones: {frecuencia} veces"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            if s.get('significado'):
+                pdf.ln(2)
+                pdf.set_font("Helvetica", "", 10)
+                pdf.set_text_color(51, 65, 85)
+                pdf.multi_cell(0, 6, _limpiar_texto(f"Significado Personal: {s.get('significado')}"))
+
+            pdf.ln(4)
+            pdf.set_draw_color(241, 245, 249)
+            pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+            pdf.ln(6)
+
+    pdf_buffer = io.BytesIO()
+    pdf.output(pdf_buffer)
+    pdf_output = pdf_buffer.getvalue()
+    pdf_buffer.close()
+
+    return pdf_output
+
+# BLOQUE: Generación de PDF de Reporte de Señales Oníricas
+def generar_pdf_senales(usuario_id, usuario_nombre):
+    """
+    Genera un PDF con el inventario completo de Señales Oníricas consolidadas
+    a partir de los tags de los sueños y sus significados registrados.
+    """
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            # 1. Conteo de apariciones de cada tag
+            cursor.execute("""
+                SELECT unnest(tags) AS tag_nombre, COUNT(*) AS total
+                FROM suenos
+                WHERE usuario_id = %s AND tags IS NOT NULL AND array_length(tags, 1) > 0
+                GROUP BY tag_nombre
+                ORDER BY total DESC;
+            """, (usuario_id,))
+            conteo_tags = {row[0]: row[1] for row in cursor.fetchall()}
+
+            # 2. Obtener significados y categorías registradas
+            cursor.execute("""
+                SELECT tag, significado, categoria
+                FROM senales_oniricas
+                WHERE usuario_id = %s;
+            """, (usuario_id,))
+            info_senales = {row[0]: {'significado': row[1], 'categoria': row[2]} for row in cursor.fetchall()}
+
+    # 3. Consolidar lista de señales
+    senales = []
+    for tag_nombre, total in conteo_tags.items():
+        detalle = info_senales.get(tag_nombre, {})
+        senales.append({
+            'nombre': tag_nombre,
+            'frecuencia': total,
+            'significado': detalle.get('significado', ''),
+            'categoria': detalle.get('categoria', 'General')
+        })
+
+    class PDFSenales(FPDF):
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(148, 163, 184)
+            self.cell(0, 10, f"Página {self.page_no()}", align="C")
+
+    pdf = PDFSenales()
+    pdf.set_margins(20, 20, 20)
+    pdf.add_page()
+
+    # Encabezado
+    pdf.set_y(20)
+    pdf.set_font("Helvetica", "B", 22)
+    pdf.set_text_color(79, 70, 229)
+    pdf.cell(0, 12, "Catálogo de Señales Oníricas", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "", 12)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(0, 8, _limpiar_texto(usuario_nombre), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 6, f"Total de señales encontradas: {len(senales)}  |  Generado el {datetime.now().strftime('%d/%m/%Y')}", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.ln(8)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+    pdf.ln(8)
+
+    # Listado de Señales
+    if not senales:
+        pdf.set_font("Helvetica", "I", 11)
+        pdf.set_text_color(100, 116, 139)
+        pdf.cell(0, 10, "No se encontraron señales oníricas registradas aún.", align="C")
+    else:
+        for s in senales:
+            if pdf.get_y() > 240:
+                pdf.add_page()
+
+            pdf.set_font("Helvetica", "B", 14)
+            pdf.set_text_color(15, 23, 42)
+            pdf.cell(0, 8, _limpiar_texto(f"• #{s['nombre']}"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            pdf.set_font("Helvetica", "I", 9)
+            pdf.set_text_color(99, 102, 241)
+            pdf.cell(0, 5, _limpiar_texto(f"Categoría: {s['categoria']}  |  Apariciones: {s['frecuencia']} veces"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            if s['significado']:
+                pdf.ln(2)
+                pdf.set_font("Helvetica", "", 10)
+                pdf.set_text_color(51, 65, 85)
+                pdf.multi_cell(0, 6, _limpiar_texto(f"Significado Personal: {s['significado']}"))
+
+            pdf.ln(4)
+            pdf.set_draw_color(241, 245, 249)
+            pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+            pdf.ln(6)
+
+    pdf_buffer = io.BytesIO()
+    pdf.output(pdf_buffer)
+    pdf_output = pdf_buffer.getvalue()
+    pdf_buffer.close()
 
     return pdf_output

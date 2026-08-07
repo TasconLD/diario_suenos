@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, Respon
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 from models import obtener_estadisticas
-from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado
+from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado, generar_pdf_estadisticas, generar_pdf_senales
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
@@ -773,3 +773,38 @@ def exportar_personalizado():
         mimetype="application/pdf",
         headers={"Content-disposition": f"attachment; filename=Diario_Personalizado_{session['usuario_nombre']}.pdf"}
     )   
+    
+# BLOQUE: Ruta para exportar reporte de estadísticas generales a PDF
+@main_bp.route('/exportar/estadisticas')
+def exportar_estadisticas_pdf():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    pdf_output = generar_pdf_estadisticas(
+        session['usuario_id'],
+        session['usuario_nombre']
+    )
+
+    return Response(
+        pdf_output,
+        mimetype="application/pdf",
+        headers={"Content-disposition": f"attachment; filename=Reporte_Estadisticas_{session['usuario_nombre']}.pdf"}
+    )
+
+
+# BLOQUE: Ruta para exportar reporte de señales oníricas a PDF
+@main_bp.route('/exportar/senales')
+def exportar_senales_pdf():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    pdf_output = generar_pdf_senales(
+        session['usuario_id'],
+        session['usuario_nombre']
+    )
+
+    return Response(
+        pdf_output,
+        mimetype="application/pdf",
+        headers={"Content-disposition": f"attachment; filename=Reporte_Senales_Oniricas_{session['usuario_nombre']}.pdf"}
+    )
