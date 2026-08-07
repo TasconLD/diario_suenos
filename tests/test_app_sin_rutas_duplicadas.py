@@ -15,17 +15,20 @@ Ubicación esperada: diario_suenos/tests/test_app_sin_rutas_duplicadas.py
 Cómo correrlo (desde la raíz del proyecto):
     pip install pytest
     pytest tests/ -v
+    
+    python -m pytest tests/ -v
 """
 
 import ast
 import os
 import pytest
 
-
+# BLOQUE: Configuración de Rutas de Prueba
 RAIZ_PROYECTO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUTA_APP_PY = os.path.join(RAIZ_PROYECTO, "app.py")
 
 
+# BLOQUE: Auxiliares de Análisis Estático (AST)
 def _cargar_arbol_ast():
     """Lee app.py y lo convierte en un árbol AST, sin ejecutar el código."""
     with open(RUTA_APP_PY, "r", encoding="utf-8") as f:
@@ -57,6 +60,7 @@ def _extraer_funciones_decoradas_con_route(arbol):
     return resultados
 
 
+# BLOQUE: Pruebas Unitarias de Integridad
 def test_no_hay_nombres_de_funcion_duplicados():
     """
     Flask usa el NOMBRE de la función como identificador único del endpoint.
@@ -115,6 +119,7 @@ def test_no_se_importa_send_from_directory_sin_usarlo():
         )
 
 
+# BLOQUE: Ejecución Directa de Tests
 if __name__ == "__main__":
     import sys
     sys.exit(pytest.main([__file__, "-v"]))
