@@ -138,8 +138,10 @@
         if (modalEdit) modalEdit.classList.remove('hidden');
     }
 
-// ==========================================
+    // ==========================================
     // 2. LÓGICA DE GRÁFICOS Y ALTERNANCIA
+    // (BLOQUE ÚNICO - antes estaba duplicado 3 veces,
+    // lo cual causaba el error "Canvas is already in use")
     // ==========================================
     window.instDona = null;
     window.instLinea = null;
@@ -147,14 +149,20 @@
     document.addEventListener("DOMContentLoaded", function() {
         const textColor = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
 
-        // 1. Gráfico de Dona
+        // 1. Gráfico de Dona (Distribución)
         const canvasDona = document.getElementById('chartCategorias');
         if (canvasDona) {
-            const bonitos = parseInt("{{ stats.bonitos if stats and stats.bonitos is defined else 0 }}") || 0;
-            const lucidos = parseInt("{{ stats.lucidos if stats and stats.lucidos is defined else 0 }}") || 0;
-            const pesadillas = parseInt("{{ stats.pesadillas if stats and stats.pesadillas is defined else 0 }}") || 0;
-            const falsosDespertar = parseInt("{{ stats.falsos_despertares if stats and stats.falsos_despertares is defined else 0 }}") || 0;
-            const salidasAstrales = parseInt("{{ stats.salidas_astrales if stats and stats.salidas_astrales is defined else 0 }}") || 0;
+            // Seguro anti-duplicado: si ya existía una instancia sobre este
+            // canvas (ej. por un hot-reload), la destruimos antes de crear otra.
+            if (window.instDona) {
+                window.instDona.destroy();
+            }
+
+            const bonitos = parseInt("{{ stats.bonitos if stats.bonitos is defined else (stats.bonito if stats.bonito is defined else 0) }}") || 0;
+            const lucidos = parseInt("{{ stats.lucidos if stats.lucidos is defined else 0 }}") || 0;
+            const pesadillas = parseInt("{{ stats.pesadillas if stats.pesadillas is defined else 0 }}") || 0;
+            const falsosDespertar = parseInt("{{ stats.falsos_despertares if stats.falsos_despertares is defined else (stats.falso_despertar if stats.falso_despertar is defined else 0) }}") || 0;
+            const salidasAstrales = parseInt("{{ stats.salidas_astrales if stats.salidas_astrales is defined else (stats.salida_astral if stats.salida_astral is defined else 0) }}") || 0;
 
             window.instDona = new Chart(canvasDona, {
                 type: 'doughnut',
@@ -180,9 +188,13 @@
             });
         }
 
-        // 2. Gráfico de Línea
+        // 2. Gráfico de Línea (Tendencia)
         const canvasLinea = document.getElementById('graficoLinea');
         if (canvasLinea) {
+            if (window.instLinea) {
+                window.instLinea.destroy();
+            }
+
             const etiquetasMeses = [{% if tendencia_mensual %}{% for item in tendencia_mensual %}'{{ item.mes }}'{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}];
             const datosMeses = [{% if tendencia_mensual %}{% for item in tendencia_mensual %}{{ item.cantidad }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}];
 
@@ -214,7 +226,7 @@
         }
     });
 
-    // Función global para alternar la vista
+    // Función global para alternar entre la dona y la tendencia
     window.cambiarGrafico = function(tipo) {
         const wrapDona = document.getElementById('wrapper-dona');
         const wrapLinea = document.getElementById('wrapper-linea');
@@ -241,154 +253,5 @@
             if (window.instLinea) window.instLinea.resize();
         }
     };
-
-    // ==========================================
-    // 3. FUNCIÓN DE ALTERNANCIA (TOGGLE)
-    // ==========================================
-    window.cambiarGrafico = function(tipo) {
-        const wrapDona = document.getElementById('wrapper-dona');
-        const wrapLinea = document.getElementById('wrapper-linea');
-        const btnDona = document.getElementById('btn-chart-dona');
-        const btnLinea = document.getElementById('btn-chart-linea');
-
-        // Fallback en caso de que busque los canvas directamente si no existen wrappers
-        const canvasDona = document.getElementById('chartCategorias');
-        const canvasLinea = document.getElementById('graficoLinea');
-
-        const elDona = wrapDona || canvasDona;
-        const elLinea = wrapLinea || canvasLinea;
-
-        if (!elDona || !elLinea) return;
-
-        if (tipo === 'dona') {
-            elLinea.style.display = 'none';
-            elDona.style.display = 'block';
-
-            if (btnDona) btnDona.className = "px-3 py-1 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition";
-            if (btnLinea) btnLinea.className = "px-3 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition";
-
-            if (window.instDona) window.instDona.resize();
-        } else {
-            elDona.style.display = 'none';
-            elLinea.style.display = 'block';
-
-            if (btnLinea) btnLinea.className = "px-3 py-1 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition";
-            if (btnDona) btnDona.className = "px-3 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition";
-
-            if (window.instLinea) window.instLinea.resize();
-        }
-    };
 </script>
-
-<!-- BLOQUE: Script de gráficos (Chart.js) Corregido y Optimizado -->
-{% if stats and stats.total and stats.total > 0 %}
-<script>
-    // Guardamos las instancias globales
-    window.instDona = null;
-    window.instLinea = null;
-
-    document.addEventListener("DOMContentLoaded", function() {
-        const textColor = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
-
-        // 1. Gráfico de Dona (Distribución)
-        const canvasDona = document.getElementById('chartCategorias');
-        if (canvasDona) {
-            const bonitos = parseInt("{{ stats.bonitos if stats.bonitos is defined else (stats.bonito if stats.bonito is defined else 0) }}") || 0;
-            const lucidos = parseInt("{{ stats.lucidos if stats.lucidos is defined else 0 }}") || 0;
-            const pesadillas = parseInt("{{ stats.pesadillas if stats.pesadillas is defined else 0 }}") || 0;
-            const falsosDespertar = parseInt("{{ stats.falsos_despertares if stats.falsos_despertares is defined else (stats.falso_despertar if stats.falso_despertar is defined else 0) }}") || 0;
-            const salidasAstrales = parseInt("{{ stats.salidas_astrales if stats.salidas_astrales is defined else (stats.salida_astral if stats.salida_astral is defined else 0) }}") || 0;
-
-            window.instDona = new Chart(canvasDona.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Bonitos', 'Lúcidos', 'Pesadillas', 'Falso Despertar', 'Salida Astral'],
-                    datasets: [{
-                        data: [bonitos, lucidos, pesadillas, falsosDespertar, salidasAstrales],
-                        backgroundColor: ['#4ade80', '#fbbf24', '#f87171', '#6366f1', '#a855f7'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: textColor,
-                                font: { size: 10, weight: '600' },
-                                boxWidth: 8,
-                                padding: 8
-                            }
-                        }
-                    },
-                    cutout: '70%'
-                }
-            });
-        }
-
-        // 2. Gráfico de Línea (Tendencia)
-        const canvasLinea = document.getElementById('graficoLinea');
-        if (canvasLinea) {
-            const etiquetasMeses = [{% for item in tendencia_mensual %}'{{ item.mes }}'{% if not loop.last %}, {% endif %}{% endfor %}];
-            const datosMeses = [{% for item in tendencia_mensual %}{{ item.cantidad }}{% if not loop.last %}, {% endif %}{% endfor %}];
-
-            window.instLinea = new Chart(canvasLinea.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: etiquetasMeses.length > 0 ? etiquetasMeses : ['Sin datos'],
-                    datasets: [{
-                        label: 'Sueños Registrados',
-                        data: datosMeses.length > 0 ? datosMeses : [0],
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.12)',
-                        fill: true,
-                        tension: 0.35,
-                        pointBackgroundColor: '#6366f1',
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { color: textColor, font: { size: 9 } } },
-                        y: { beginAtZero: true, ticks: { precision: 0, color: textColor, font: { size: 9 } } }
-                    }
-                }
-            });
-        }
-    });
-
-    // 3. Función global de intercambio directo conectada a los wrappers
-    window.cambiarGrafico = function(tipo) {
-        const wrapDona = document.getElementById('wrapper-dona');
-        const wrapLinea = document.getElementById('wrapper-linea');
-        const btnDona = document.getElementById('btn-chart-dona');
-        const btnLinea = document.getElementById('btn-chart-linea');
-
-        if (!wrapDona || !wrapLinea) return;
-
-        if (tipo === 'dona') {
-            wrapLinea.classList.add('hidden');
-            wrapDona.classList.remove('hidden');
-
-            btnDona.className = "px-3 py-1 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition";
-            btnLinea.className = "px-3 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition";
-
-            if (window.instDona) window.instDona.resize();
-        } else {
-            wrapDona.classList.add('hidden');
-            wrapLinea.classList.remove('hidden');
-
-            btnLinea.className = "px-3 py-1 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition";
-            btnDona.className = "px-3 py-1 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition";
-
-            if (window.instLinea) window.instLinea.resize();
-        }
-    };
-</script>
-{% endif %}
 {% endblock %}

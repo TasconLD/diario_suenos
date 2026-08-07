@@ -45,3 +45,44 @@ def cargar_datos(usuario_id):
                 else:
                     s['hora_formateada'] = None
             return suenos
+
+# BLOQUE: Carga de registros filtrados para exportación personalizada
+def cargar_datos_filtrados(usuario_id, fecha_inicio=None, fecha_fin=None, categorias_filtro=None):
+    """
+    Trae los sueños del usuario aplicando filtros opcionales de rango de
+    fechas (fecha_inicio, fecha_fin en formato 'YYYY-MM-DD') y categorías
+    (lista de strings, ej. ['Lucido', 'Pesadilla']). Pensada para la
+    exportación de PDF personalizado con diseño de libro/diario.
+    Se ordena ascendente (más antiguo primero) para simular la lectura
+    natural de un diario, a diferencia de cargar_datos() que es descendente.
+    """
+    condiciones = ["usuario_id = %s"]
+    parametros = [usuario_id]
+
+    if fecha_inicio:
+        condiciones.append("fecha >= %s")
+        parametros.append(fecha_inicio)
+
+    if fecha_fin:
+        condiciones.append("fecha <= %s")
+        parametros.append(fecha_fin)
+
+    if categorias_filtro:
+        categorias_lower = [c.lower() for c in categorias_filtro]
+        condiciones.append("EXISTS (SELECT 1 FROM unnest(categorias) c WHERE LOWER(c) = ANY(%s))")
+        parametros.append(categorias_lower)
+
+    sql_query = "SELECT * FROM suenos WHERE " + " AND ".join(condiciones) + " ORDER BY fecha ASC NULLS LAST, id ASC;"
+
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(sql_query, parametros)
+            suenos = cursor.fetchall()
+            for s in suenos:
+                if s.get('fecha'):
+                    s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
+                if s.get('hora'):
+                    s['hora_formateada'] = s['hora'].strftime('%I:%M %p')
+                else:
+                    s['hora_formateada'] = None
+            return suenos

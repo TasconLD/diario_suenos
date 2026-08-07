@@ -1,11 +1,13 @@
 import io
+from datetime import datetime
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from models import cargar_datos
+from models import cargar_datos, cargar_datos_filtrados
 
+# BLOQUE: Generación del PDF básico (reporte plano de todos los sueños)
 def generar_pdf_suenos(usuario_id, usuario_nombre):
     suenos_actuales = cargar_datos(usuario_id)
     total = len(suenos_actuales)
@@ -153,4 +155,227 @@ def generar_pdf_suenos(usuario_id, usuario_nombre):
     if img_buf:
         img_buf.close()
         
+    return pdf_output
+
+
+# BLOQUE: Colores e íconos por categoría (compartido por el PDF formateado)
+COLORES_CATEGORIA = {
+    'lucido': (255, 202, 40),
+    'pesadilla': (239, 83, 80),
+    'bonito': (74, 222, 128),
+    'falso despertar': (99, 102, 241),
+    'falsodespertar': (99, 102, 241),
+    'salida astral': (168, 85, 247),
+    'salidaastral': (168, 85, 247),
+}
+COLOR_CATEGORIA_DEFECTO = (148, 163, 184)
+
+
+def _limpiar_texto(texto):
+    """Convierte texto a latin-1 reemplazando caracteres no soportados por fpdf2 clásico."""
+    if not texto:
+        return ""
+    return str(texto).encode('latin-1', 'replace').decode('latin-1')
+
+
+def _generar_grafica_dona(conteos):
+    """
+    Genera la imagen de la gráfica de dona a partir de un diccionario
+    {etiqueta: cantidad}, omitiendo las categorías en cero. Devuelve un
+    BytesIO con el PNG, o None si no hay datos.
+    """
+    labels = [k for k, v in conteos.items() if v > 0]
+    sizes = [v for v in conteos.values() if v > 0]
+    if not sizes:
+        return None
+
+    paleta = {
+        'Bonitos': '#4ade80',
+        'Lúcidos': '#ffca28',
+        'Pesadillas': '#ef5350',
+        'Falso Despertar': '#6366f1',
+        'Salida Astral': '#a855f7',
+    }
+    colors = [paleta.get(l, '#94a3b8') for l in labels]
+
+    fig, ax = plt.subplots(figsize=(3, 3))
+    wedges, texts, autotexts = ax.pie(
+        sizes,
+        labels=labels,
+        colors=colors,
+        autopct='%1.0f%%',
+        startangle=90,
+        pctdistance=0.75,
+        textprops={'fontsize': 8, 'color': '#1e293b', 'weight': 'bold'}
+    )
+    for autotext in autotexts:
+        autotext.set_color('white')
+        autotext.set_fontsize(8)
+
+    centre_circle = plt.Circle((0, 0), 0.55, fc='white')
+    fig.gca().add_artist(centre_circle)
+    ax.axis('equal')
+    plt.tight_layout()
+
+    img_buf = io.BytesIO()
+    plt.savefig(img_buf, format='png', dpi=200, transparent=True)
+    img_buf.seek(0)
+    plt.close(fig)
+    return img_buf
+
+
+# BLOQUE: Generación del PDF formateado tipo libro/diario con filtros
+def generar_pdf_diario_formateado(usuario_id, usuario_nombre, fecha_inicio=None, fecha_fin=None, categorias_filtro=None):
+    """
+    Genera un PDF con diseño de libro/diario: portada con resumen y
+    gráfica, y una página dedicada por cada sueño (en vez del reporte
+    compacto de generar_pdf_suenos). Admite filtros opcionales por
+    rango de fechas y por categorías.
+    """
+    suenos = cargar_datos_filtrados(
+        usuario_id,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        categorias_filtro=categorias_filtro
+    )
+    total = len(suenos)
+
+    # Conteo de las 5 categorías reales para la gráfica de la portada
+    conteos = {'Bonitos': 0, 'Lúcidos': 0, 'Pesadillas': 0, 'Falso Despertar': 0, 'Salida Astral': 0}
+    suma_calidad = 0
+    for s in suenos:
+        cats = [c.lower() for c in s.get('categorias', []) if c]
+        if 'lucido' in cats:
+            conteos['Lúcidos'] += 1
+        if 'pesadilla' in cats:
+            conteos['Pesadillas'] += 1
+        if 'bonito' in cats:
+            conteos['Bonitos'] += 1
+        if 'falso despertar' in cats or 'falsodespertar' in cats:
+            conteos['Falso Despertar'] += 1
+        if 'salida astral' in cats or 'salidaastral' in cats:
+            conteos['Salida Astral'] += 1
+        try:
+            suma_calidad += int(s.get('calidad_sueno', 5))
+        except (ValueError, TypeError):
+            suma_calidad += 5
+
+    promedio = round(suma_calidad / total, 1) if total > 0 else 0.0
+    img_buf = _generar_grafica_dona(conteos)
+
+    class PDFLibro(FPDF):
+        def footer(self):
+            if self.page_no() == 1:
+                return  # sin numeración en la portada
+            self.set_y(-15)
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(148, 163, 184)
+            self.cell(0, 10, f"Pagina {self.page_no() - 1}", align="C")
+
+    pdf = PDFLibro()
+    pdf.set_margins(20, 20, 20)
+
+    # --- Portada ---
+    pdf.add_page()
+    pdf.set_y(70)
+    pdf.set_font("Helvetica", "B", 26)
+    pdf.set_text_color(79, 70, 229)
+    pdf.cell(0, 14, "Diario de Suenos", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "", 14)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(0, 10, _limpiar_texto(usuario_nombre), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(2)
+
+    if fecha_inicio or fecha_fin:
+        rango_txt = f"Del {fecha_inicio or 'inicio'} al {fecha_fin or 'hoy'}"
+    else:
+        rango_txt = "Historial completo"
+    pdf.set_font("Helvetica", "I", 11)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(0, 8, rango_txt, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    if categorias_filtro:
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 7, f"Categorias: {_limpiar_texto(', '.join(categorias_filtro))}", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.ln(6)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_text_color(30, 41, 59)
+    pdf.cell(0, 6, f"{total} recuerdos  |  Descanso promedio: {promedio}/5", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    if img_buf:
+        y_imagen = pdf.get_y() + 8
+        pdf.image(img_buf, x=65, y=y_imagen, w=80)
+        pdf.set_y(y_imagen + 80 + 10)
+    else:
+        pdf.ln(15)
+
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 6, f"Generado el {datetime.now().strftime('%d/%m/%Y')}", align="C")
+
+    # --- Una página por cada sueño, estilo entrada de diario ---
+    for s in suenos:
+        pdf.add_page()
+
+        categorias_orig = [c for c in s.get('categorias', []) if c]
+        cats_lower = [c.lower() for c in categorias_orig]
+        color_cat = COLOR_CATEGORIA_DEFECTO
+        for cat in cats_lower:
+            if cat in COLORES_CATEGORIA:
+                color_cat = COLORES_CATEGORIA[cat]
+                break
+
+        # Franja de color decorativa en la parte superior (efecto "cinta de libro")
+        pdf.set_fill_color(*color_cat)
+        pdf.rect(0, 0, 210, 6, style="F")
+
+        pdf.set_y(20)
+        pdf.set_font("Helvetica", "I", 11)
+        pdf.set_text_color(*color_cat)
+        fecha_txt = s.get('fecha') or 'Recuerdo antiguo'
+        hora_txt = f"  -  {s['hora_formateada']}" if s.get('hora_formateada') else ""
+        pdf.cell(0, 8, _limpiar_texto(f"{fecha_txt}{hora_txt}"), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        pdf.ln(4)
+        pdf.set_font("Helvetica", "B", 20)
+        pdf.set_text_color(15, 23, 42)
+        destacado_txt = "  *" if s.get('destacado') else ""
+        pdf.multi_cell(0, 10, _limpiar_texto(f"{s.get('titulo', '')}{destacado_txt}"), align="C")
+
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(100, 116, 139)
+        etiquetas_extra = []
+        if categorias_orig:
+            etiquetas_extra.append(', '.join(categorias_orig))
+        if s.get('emocion'):
+            etiquetas_extra.append(f"Emocion: {s['emocion']}")
+        etiquetas_extra.append(f"Calidad: {s.get('calidad_sueno', 5)}/5")
+        pdf.cell(0, 6, _limpiar_texto("  |  ".join(etiquetas_extra)), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        if s.get('tags'):
+            pdf.set_font("Helvetica", "I", 9)
+            pdf.set_text_color(129, 140, 248)
+            tags_txt = '  '.join(f"#{t}" for t in s['tags'])
+            pdf.cell(0, 6, _limpiar_texto(tags_txt), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        pdf.ln(10)
+        pdf.set_draw_color(226, 232, 240)
+        pdf.line(40, pdf.get_y(), 170, pdf.get_y())
+        pdf.ln(10)
+
+        pdf.set_font("Helvetica", "", 12)
+        pdf.set_text_color(51, 65, 85)
+        pdf.multi_cell(0, 7, _limpiar_texto(s.get('descripcion', '')))
+
+    pdf_buffer = io.BytesIO()
+    pdf.output(pdf_buffer)
+    pdf_output = pdf_buffer.getvalue()
+    pdf_buffer.close()
+
+    if img_buf:
+        img_buf.close()
+
     return pdf_output

@@ -415,3 +415,62 @@ window.togglePasswordVisibility = function(inputId, btn) {
     }
 };
 </script>
+
+<!-- BLOQUE: Modal de exportación personalizada (PDF formato libro con filtros) -->
+<div id="modal-exportar-personalizado" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-book text-indigo-500"></i> Exportar Diario Personalizado</h3>
+            <button onclick="document.getElementById('modal-exportar-personalizado').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form action="{{ url_for('main.exportar_personalizado') }}" method="GET" class="p-4 space-y-4 text-xs">
+            <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
+                Genera un PDF con diseño de libro, una página por cada sueño. Deja los filtros vacíos para incluir todo tu historial.
+            </p>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Desde</label>
+                    <input type="date" name="fecha_inicio" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hasta</label>
+                    <input type="date" name="fecha_fin" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">Categorías (opcional)</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
+                        <input type="checkbox" name="categoria" value="Bonito" class="rounded text-indigo-600 w-3.5 h-3.5">
+                        <span class="text-slate-600 dark:text-slate-300">😊 Bonito</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
+                        <input type="checkbox" name="categoria" value="Lucido" class="rounded text-indigo-600 w-3.5 h-3.5">
+                        <span class="text-slate-600 dark:text-slate-300">✨ Lúcido</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
+                        <input type="checkbox" name="categoria" value="Pesadilla" class="rounded text-indigo-600 w-3.5 h-3.5">
+                        <span class="text-slate-600 dark:text-slate-300">👹 Pesadilla</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
+                        <input type="checkbox" name="categoria" value="Falso Despertar" class="rounded text-indigo-600 w-3.5 h-3.5">
+                        <span class="text-slate-600 dark:text-slate-300">👁️ Falso Despertar</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer col-span-2">
+                        <input type="checkbox" name="categoria" value="Salida Astral" class="rounded text-indigo-600 w-3.5 h-3.5">
+                        <span class="text-slate-600 dark:text-slate-300">🧘 Salida Astral</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700/60">
+                <button type="button" onclick="document.getElementById('modal-exportar-personalizado').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i> Generar PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

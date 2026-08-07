@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, Respon
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 from models import obtener_estadisticas
-from pdf_generator import generar_pdf_suenos
+from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
@@ -750,4 +750,26 @@ def exportar():
         headers={"Content-disposition": f"attachment; filename=Diario_{session['usuario_nombre']}.pdf"}
     )
     
-    
+# BLOQUE: Ruta para exportar el diario personalizado (formato libro con filtros)
+@main_bp.route('/exportar/personalizado')
+def exportar_personalizado():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    fecha_inicio = request.args.get('fecha_inicio', '').strip() or None
+    fecha_fin = request.args.get('fecha_fin', '').strip() or None
+    categorias_filtro = request.args.getlist('categoria') or None
+
+    pdf_output = generar_pdf_diario_formateado(
+        session['usuario_id'],
+        session['usuario_nombre'],
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        categorias_filtro=categorias_filtro
+    )
+
+    return Response(
+        pdf_output,
+        mimetype="application/pdf",
+        headers={"Content-disposition": f"attachment; filename=Diario_Personalizado_{session['usuario_nombre']}.pdf"}
+    )   
