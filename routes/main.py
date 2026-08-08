@@ -1034,14 +1034,18 @@ def obtener_credenciales_drive(usuario_id):
 
 
 # BLOQUE: Sincronización Automática con Google Drive
-@main_bp.route("/backup/drive/conectar")
+@main_bp.route('/backup/drive/conectar')
 def drive_conectar():
-    if "usuario_id" not in session:
-        return redirect(url_for("auth.login"))
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
 
-    client_id = os.environ.get("GOOGLE_CLIENT_ID")
-    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
-    redirect_uri = url_for("main.drive_callback", _external=True)
+    client_id = os.environ.get('GOOGLE_CLIENT_ID')
+    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+    redirect_uri = url_for('main.drive_callback', _external=True)
+
+    # Forzar HTTPS si estamos en Render
+    if redirect_uri.startswith('http://') and 'onrender.com' in redirect_uri:
+        redirect_uri = redirect_uri.replace('http://', 'https://', 1)
 
     flow = Flow.from_client_config(
         {
@@ -1049,69 +1053,79 @@ def drive_conectar():
                 "client_id": client_id,
                 "client_secret": client_secret,
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
+                "token_uri": "https://oauth2.googleapis.com/token"
             }
         },
         scopes=DRIVE_SCOPES,
-        redirect_uri=redirect_uri,
+        redirect_uri=redirect_uri
     )
 
     authorization_url, state = flow.authorization_url(
-        access_type="offline", prompt="consent", include_granted_scopes="true"
+        access_type='offline',
+        prompt='consent',
+        include_granted_scopes='true'
     )
 
-    session["oauth_drive_state"] = state
+    session['oauth_drive_state'] = state
     return redirect(authorization_url)
 
 
-@main_bp.route("/backup/drive/callback")
+@main_bp.route('/backup/drive/callback')
 def drive_callback():
-    if "usuario_id" not in session:
-        return redirect(url_for("auth.login"))
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
 
-    state = session.get("oauth_drive_state")
-    client_id = os.environ.get("GOOGLE_CLIENT_ID")
-    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
-    redirect_uri = url_for("main.drive_callback", _external=True)
+    state = session.get('oauth_drive_state')
+    client_id = os.environ.get('GOOGLE_CLIENT_ID')
+    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+    redirect_uri = url_for('main.drive_callback', _external=True)
 
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-            }
-        },
-        scopes=DRIVE_SCOPES,
-        state=state,
-        redirect_uri=redirect_uri,
-    )
+    if redirect_uri.startswith('http://') and 'onrender.com' in redirect_uri:
+        redirect_uri = redirect_uri.replace('http://', 'https://', 1)
 
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-
-    if credentials.refresh_token:
-        usuario_id = session["usuario_id"]
-        with obtener_conexion() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE usuarios 
-                    SET google_drive_refresh_token = %s, google_drive_sync_activa = TRUE 
-                    WHERE id = %s;
-                """,
-                    (credentials.refresh_token, usuario_id),
-                )
-            conn.commit()
-        flash("Google Drive vinculado exitosamente.", "success")
-    else:
-        flash(
-            "No se pudo obtener el acceso continuo a Google Drive. Reintenta la vinculación.",
-            "error",
+    try:
+        # Se recrea el Flow pasando explícitamente autogenerate_code_verifier=False para evitar el descalce de PKCE
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token"
+                }
+            },
+            scopes=DRIVE_SCOPES,
+            state=state,
+            redirect_uri=redirect_uri,
+            autogenerate_code_verifier=False
         )
 
-    return redirect(request.referrer or url_for("main.index"))
+        authorization_response = request.url
+        if authorization_response.startswith('http://') and 'onrender.com' in authorization_response:
+            authorization_response = authorization_response.replace('http://', 'https://', 1)
+
+        flow.fetch_token(authorization_response=authorization_response)
+        credentials = flow.credentials
+
+        if credentials.refresh_token:
+            usuario_id = session['usuario_id']
+            with obtener_conexion() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE usuarios 
+                        SET google_drive_refresh_token = %s, google_drive_sync_activa = TRUE 
+                        WHERE id = %s;
+                    """, (credentials.refresh_token, usuario_id))
+                conn.commit()
+            flash("Google Drive vinculado exitosamente.", "success")
+        else:
+            flash("No se pudo obtener el acceso continuo a Google Drive. Intenta la vinculación de nuevo.", "warning")
+
+    except Exception as e:
+        print(f"Error al procesar callback de Google Drive: {e}")
+        flash("Ocurrió un error al vincular tu cuenta de Google Drive. Inténtalo nuevamente.", "error")
+
+    return redirect(url_for('main.index'))
 
 
 @main_bp.route("/backup/drive/sincronizar", methods=["POST", "GET"])
