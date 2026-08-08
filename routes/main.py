@@ -9,6 +9,7 @@ from database import obtener_conexion
 from models import obtener_estadisticas
 import json
 from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado, generar_pdf_estadisticas, generar_pdf_senales
+from datetime import date, datetime, time
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
@@ -816,6 +817,14 @@ def exportar_senales_pdf():
     )
     
 # BLOQUE: Exportación / Importación Manual de Base de Datos (JSON)
+def serializador_json(obj):
+    """Soporte para convertir objetos date, datetime y time a formato legible en JSON."""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, time):
+        return obj.strftime("%H:%M:%S")
+    raise TypeError(f"Tipo {type(obj)} no es serializable en JSON")
+
 @main_bp.route('/backup/exportar')
 def backup_exportar():
     if 'usuario_id' not in session:
@@ -823,45 +832,53 @@ def backup_exportar():
 
     usuario_id = session['usuario_id']
 
-    with obtener_conexion() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            # 1. Exportar Sueños
-            cursor.execute("SELECT * FROM suenos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
-            suenos = cursor.fetchall() or []
-            for s in suenos:
-                if s.get('fecha'):
-                    s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
-                if s.get('hora'):
-                    s['hora'] = s['hora'].strftime('%H:%M:%S')
+    try:
+        with obtener_conexion() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # 1. Exportar Sueños
+                cursor.execute("SELECT * FROM suenos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+                suenos = cursor.fetchall() or []
 
-            # 2. Exportar Señales Oníricas
-            cursor.execute("SELECT * FROM senales WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
-            senales = cursor.fetchall() or []
+                # 2. Exportar Señales Oníricas
+                cursor.execute("SELECT * FROM senales_oniricas WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+                senales = cursor.fetchall() or []
 
-            # 3. Exportar Objetivos
-            cursor.execute("SELECT * FROM objetivos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
-            objetivos = cursor.fetchall() or []
-            for o in objetivos:
-                if o.get('fecha_creacion'):
-                    o['fecha_creacion'] = o['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+                # 3. Exportar Objetivos Oníricos
+                cursor.execute("SELECT * FROM objetivos_oniricos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+                objetivos = cursor.fetchall() or []
 
-    data_backup = {
-        "version": "1.0",
-        "fecha_backup": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        "usuario": session.get('usuario_nombre', 'Usuario'),
-        "suenos": suenos,
-        "senales": senales,
-        "objetivos": objetivos
-    }
+                # 4. Exportar Higiene de Sueño Logs
+                cursor.execute("SELECT * FROM higiene_sueno_logs WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+                higiene = cursor.fetchall() or []
 
-    json_str = json.dumps(data_backup, ensure_ascii=False, indent=2)
-    filename = f"backup_diario_suenos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                # 5. Exportar Tótemps
+                cursor.execute("SELECT * FROM totems WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+                totems = cursor.fetchall() or []
 
-    return Response(
-        json_str,
-        mimetype="application/json",
-        headers={"Content-disposition": f"attachment; filename={filename}"}
-    )
+        data_backup = {
+            "version": "1.0",
+            "fecha_backup": datetime.now().isoformat(),
+            "usuario": session.get('usuario_nombre', 'Usuario'),
+            "suenos": suenos,
+            "senales_oniricas": senales,
+            "objetivos_oniricos": objetivos,
+            "higiene_sueno_logs": higiene,
+            "totems": totems
+        }
+
+        json_str = json.dumps(data_backup, default=serializador_json, ensure_ascii=False, indent=2)
+        filename = f"backup_diario_suenos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+        return Response(
+            json_str,
+            mimetype="application/json",
+            headers={"Content-disposition": f"attachment; filename={filename}"}
+        )
+
+    except Exception as e:
+        print(f"Error al exportar respaldo: {e}")
+        flash("Ocurrió un error al generar la copia de seguridad.", "error")
+        return redirect(request.referrer or url_for('main.index'))
 
 
 @main_bp.route('/backup/importar', methods=['POST'])
@@ -887,60 +904,95 @@ def backup_importar():
         return redirect(request.referrer or url_for('main.index'))
 
     suenos = data.get('suenos', [])
-    senales = data.get('senales', [])
-    objetivos = data.get('objetivos', [])
+    senales = data.get('senales_oniricas') or data.get('senales', [])
+    objetivos = data.get('objetivos_oniricos') or data.get('objetivos', [])
+    higiene = data.get('higiene_sueno_logs', [])
+    totems = data.get('totems', [])
 
     insertados = 0
-    with obtener_conexion() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            # Importar Sueños
-            for s in suenos:
-                cursor.execute("""
-                    INSERT INTO suenos (usuario_id, titulo, descripcion, fecha, hora, lucido, pesadilla, salida_astral, destacado, emocion, categorias, tags, claridad)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-                """, (
-                    usuario_id,
-                    s.get('titulo', 'Sin Título'),
-                    s.get('descripcion', ''),
-                    s.get('fecha'),
-                    s.get('hora'),
-                    s.get('lucido', False),
-                    s.get('pesadilla', False),
-                    s.get('salida_astral', False),
-                    s.get('destacado', False),
-                    s.get('emocion'),
-                    s.get('categorias'),
-                    s.get('tags'),
-                    s.get('claridad', 3)
-                ))
-                insertados += 1
 
-            # Importar Señales
-            for sen in senales:
-                cursor.execute("""
-                    INSERT INTO senales (usuario_id, nombre, categoria, significado)
-                    VALUES (%s, %s, %s, %s)
-                    ON CONFLICT DO NOTHING;
-                """, (
-                    usuario_id,
-                    sen.get('nombre'),
-                    sen.get('categoria'),
-                    sen.get('significado')
-                ))
+    try:
+        with obtener_conexion() as conn:
+            with conn.cursor() as cursor:
+                # 1. Importar Sueños
+                for s in suenos:
+                    cursor.execute("""
+                        INSERT INTO suenos (usuario_id, titulo, descripcion, fecha, hora, calidad_sueno, destacado, emocion, categorias, tags)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        usuario_id,
+                        s.get('titulo', 'Sin Título'),
+                        s.get('descripcion', ''),
+                        s.get('fecha'),
+                        s.get('hora'),
+                        s.get('calidad_sueno'),
+                        s.get('destacado', False),
+                        s.get('emocion'),
+                        s.get('categorias'),
+                        s.get('tags')
+                    ))
+                    insertados += 1
 
-            # Importar Objetivos
-            for obj in objetivos:
-                cursor.execute("""
-                    INSERT INTO objetivos (usuario_id, titulo, descripcion, completado)
-                    VALUES (%s, %s, %s, %s);
-                """, (
-                    usuario_id,
-                    obj.get('titulo'),
-                    obj.get('descripcion'),
-                    obj.get('completado', False)
-                ))
+                # 2. Importar Señales Oníricas
+                for sen in senales:
+                    tag_valor = sen.get('tag') or sen.get('nombre')
+                    cursor.execute("""
+                        INSERT INTO senales_oniricas (usuario_id, tag, categoria, significado)
+                        VALUES (%s, %s, %s, %s);
+                    """, (
+                        usuario_id,
+                        tag_valor,
+                        sen.get('categoria'),
+                        sen.get('significado')
+                    ))
+
+                # 3. Importar Objetivos Oníricos
+                for obj in objetivos:
+                    cursor.execute("""
+                        INSERT INTO objetivos_oniricos (usuario_id, titulo, descripcion, prioridad, categoria, veces_cumplido)
+                        VALUES (%s, %s, %s, %s, %s, %s);
+                    """, (
+                        usuario_id,
+                        obj.get('titulo'),
+                        obj.get('descripcion'),
+                        obj.get('prioridad'),
+                        obj.get('categoria'),
+                        obj.get('veces_cumplido', 0)
+                    ))
+
+                # 4. Importar Higiene de Sueño Logs
+                for h in higiene:
+                    cursor.execute("""
+                        INSERT INTO higiene_sueno_logs (usuario_id, habito, completado, fecha)
+                        VALUES (%s, %s, %s, %s);
+                    """, (
+                        usuario_id,
+                        h.get('habito'),
+                        h.get('completado', False),
+                        h.get('fecha')
+                    ))
+
+                # 5. Importar Tótemps
+                for t in totems:
+                    cursor.execute("""
+                        INSERT INTO totems (usuario_id, nombre, tipo, frase, sonido, vibracion, imagen)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        usuario_id,
+                        t.get('nombre'),
+                        t.get('tipo'),
+                        t.get('frase'),
+                        t.get('sonido'),
+                        t.get('vibracion'),
+                        t.get('imagen')
+                    ))
 
             conn.commit()
 
-    flash(f"Copia de seguridad restaurada con éxito ({insertados} registros importados).", "success")
+        flash(f"Copia de seguridad restaurada con éxito ({insertados} sueños importados).", "success")
+
+    except Exception as e:
+        print(f"Error al importar respaldo: {e}")
+        flash("Ocurrió un error al procesar la importación en la base de datos.", "error")
+
     return redirect(request.referrer or url_for('main.index'))
