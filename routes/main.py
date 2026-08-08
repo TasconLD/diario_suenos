@@ -88,7 +88,7 @@ def index():
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             # 0. Obtener datos del usuario (necesario para verificar google_id en el modal de cuenta)
-            cursor.execute("SELECT id, usuario, email, google_id FROM usuarios WHERE id = %s;", (usuario_id,))
+            cursor.execute("SELECT id, usuario, email, google_id, google_drive_sync_activa FROM usuarios WHERE id = %s;", (usuario_id,))
             usuario_actual = cursor.fetchone()
 
             cursor.execute(sql_query, parametros)
@@ -1079,6 +1079,9 @@ def drive_conectar():
 
 @main_bp.route("/backup/drive/callback")
 def drive_callback():
+    # Evita el error por scopes combinados de Google Auth + Drive
+    os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+
     if "usuario_id" not in session:
         return redirect(url_for("auth.login"))
 
@@ -1156,6 +1159,7 @@ def drive_callback():
         )
 
     return redirect(url_for("main.index"))
+
 
 @main_bp.route("/backup/drive/sincronizar", methods=["POST", "GET"])
 def drive_sincronizar():
