@@ -12,6 +12,7 @@ import os
 from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado, generar_pdf_estadisticas, generar_pdf_senales
 from datetime import date, datetime, time
 from io import BytesIO
+import os
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -1004,7 +1005,12 @@ def backup_importar():
     return redirect(request.referrer or url_for('main.index'))
 
 # Scope: solo acceso a los archivos creados específicamente por esta app
-DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file']
+DRIVE_SCOPES = [
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "openid",
+]
 
 
 def obtener_credenciales_drive(usuario_id):
@@ -1022,6 +1028,7 @@ def obtener_credenciales_drive(usuario_id):
 
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+    
 
     return Credentials(
         token=None,
