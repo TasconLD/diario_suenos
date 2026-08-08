@@ -2,7 +2,7 @@ import random
 import re
 from collections import Counter
 import time
-from datetime import datetime, date
+from datetime import datetime, date, time as datetime_time
 from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash, jsonify
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
@@ -10,7 +10,6 @@ from models import obtener_estadisticas
 import json
 import os
 from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado, generar_pdf_estadisticas, generar_pdf_senales
-from datetime import date, datetime, time
 from io import BytesIO
 import os
 from google.oauth2.credentials import Credentials
