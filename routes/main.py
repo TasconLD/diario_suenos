@@ -8,8 +8,14 @@ from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 from models import obtener_estadisticas
 import json
+import os
 from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado, generar_pdf_estadisticas, generar_pdf_senales
 from datetime import date, datetime, time
+from io import BytesIO
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
@@ -996,3 +1002,244 @@ def backup_importar():
         flash("Ocurrió un error al procesar la importación en la base de datos.", "error")
 
     return redirect(request.referrer or url_for('main.index'))
+
+# Scope: solo acceso a los archivos creados específicamente por esta app
+DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file']
+
+
+def obtener_credenciales_drive(usuario_id):
+    """Obtiene y refresca las credenciales OAuth2 de Google Drive del usuario."""
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                "SELECT google_drive_refresh_token FROM usuarios WHERE id = %s;",
+                (usuario_id,),
+            )
+            res = cursor.fetchone()
+
+    if not res or not res.get("google_drive_refresh_token"):
+        return None
+
+    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+
+    return Credentials(
+        token=None,
+        refresh_token=res["google_drive_refresh_token"],
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=DRIVE_SCOPES,
+    )
+
+
+# BLOQUE: Sincronización Automática con Google Drive
+@main_bp.route("/backup/drive/conectar")
+def drive_conectar():
+    if "usuario_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+    redirect_uri = url_for("main.drive_callback", _external=True)
+
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        },
+        scopes=DRIVE_SCOPES,
+        redirect_uri=redirect_uri,
+    )
+
+    authorization_url, state = flow.authorization_url(
+        access_type="offline", prompt="consent", include_granted_scopes="true"
+    )
+
+    session["oauth_drive_state"] = state
+    return redirect(authorization_url)
+
+
+@main_bp.route("/backup/drive/callback")
+def drive_callback():
+    if "usuario_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    state = session.get("oauth_drive_state")
+    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+    redirect_uri = url_for("main.drive_callback", _external=True)
+
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        },
+        scopes=DRIVE_SCOPES,
+        state=state,
+        redirect_uri=redirect_uri,
+    )
+
+    flow.fetch_token(authorization_response=request.url)
+    credentials = flow.credentials
+
+    if credentials.refresh_token:
+        usuario_id = session["usuario_id"]
+        with obtener_conexion() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE usuarios 
+                    SET google_drive_refresh_token = %s, google_drive_sync_activa = TRUE 
+                    WHERE id = %s;
+                """,
+                    (credentials.refresh_token, usuario_id),
+                )
+            conn.commit()
+        flash("Google Drive vinculado exitosamente.", "success")
+    else:
+        flash(
+            "No se pudo obtener el acceso continuo a Google Drive. Reintenta la vinculación.",
+            "error",
+        )
+
+    return redirect(request.referrer or url_for("main.index"))
+
+
+@main_bp.route("/backup/drive/sincronizar", methods=["POST", "GET"])
+def drive_sincronizar():
+    if "usuario_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    usuario_id = session["usuario_id"]
+    creds = obtener_credenciales_drive(usuario_id)
+
+    if not creds:
+        flash("Debes vincular tu cuenta de Google Drive primero.", "warning")
+        return redirect(url_for("main.drive_conectar"))
+
+    try:
+        # 1. Recopilar datos para la copia de seguridad
+        with obtener_conexion() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(
+                    "SELECT * FROM suenos WHERE usuario_id = %s ORDER BY id ASC;",
+                    (usuario_id,),
+                )
+                suenos = cursor.fetchall() or []
+
+                cursor.execute(
+                    "SELECT * FROM senales_oniricas WHERE usuario_id = %s ORDER BY id ASC;",
+                    (usuario_id,),
+                )
+                senales = cursor.fetchall() or []
+
+                cursor.execute(
+                    "SELECT * FROM objetivos_oniricos WHERE usuario_id = %s ORDER BY id ASC;",
+                    (usuario_id,),
+                )
+                objetivos = cursor.fetchall() or []
+
+                cursor.execute(
+                    "SELECT * FROM higiene_sueno_logs WHERE usuario_id = %s ORDER BY id ASC;",
+                    (usuario_id,),
+                )
+                higiene = cursor.fetchall() or []
+
+                cursor.execute(
+                    "SELECT * FROM totems WHERE usuario_id = %s ORDER BY id ASC;",
+                    (usuario_id,),
+                )
+                totems = cursor.fetchall() or []
+
+        data_backup = {
+            "version": "1.0",
+            "fecha_backup": datetime.now().isoformat(),
+            "usuario": session.get("usuario_nombre", "Usuario"),
+            "suenos": suenos,
+            "senales_oniricas": senales,
+            "objetivos_oniricos": objetivos,
+            "higiene_sueno_logs": higiene,
+            "totems": totems,
+        }
+
+        json_bytes = json.dumps(
+            data_backup,
+            default=serializador_json,
+            ensure_ascii=False,
+            indent=2,
+        ).encode("utf-8")
+        media = MediaIoBaseUpload(
+            BytesIO(json_bytes), mimetype="application/json", resumable=True
+        )
+
+        service = build("drive", "v3", credentials=creds)
+
+        # 2. Buscar o crear la carpeta 'Bitacora_Onirica_Backups'
+        response = (
+            service.files()
+            .list(
+                q="name = 'Bitacora_Onirica_Backups' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+                spaces="drive",
+                fields="files(id, name)",
+            )
+            .execute()
+        )
+
+        folders = response.get("files", [])
+        if not folders:
+            folder_metadata = {
+                "name": "Bitacora_Onirica_Backups",
+                "mimeType": "application/vnd.google-apps.folder",
+            }
+            folder = (
+                service.files().create(body=folder_metadata, fields="id").execute()
+            )
+            folder_id = folder.get("id")
+        else:
+            folder_id = folders[0].get("id")
+
+        # 3. Guardar/actualizar la copia de seguridad dentro de la carpeta
+        nombre_archivo = "backup_onirico_auto.json"
+
+        search_file = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and name = '{nombre_archivo}' and trashed = false",
+                spaces="drive",
+                fields="files(id, name)",
+            )
+            .execute()
+            .get("files", [])
+        )
+
+        if search_file:
+            file_id = search_file[0].get("id")
+            service.files().update(fileId=file_id, media_body=media).execute()
+        else:
+            file_metadata = {
+                "name": nombre_archivo,
+                "parents": [folder_id],
+            }
+            service.files().create(
+                body=file_metadata, media_body=media, fields="id"
+            ).execute()
+
+        flash(
+            "Copia de seguridad sincronizada exitosamente en tu Google Drive.",
+            "success",
+        )
+
+    except Exception as e:
+        print(f"Error al sincronizar con Google Drive: {e}")
+        flash("Ocurrió un error al sincronizar con Google Drive.", "error")
+
+    return redirect(request.referrer or url_for("main.index"))

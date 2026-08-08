@@ -11,3 +11,6 @@ Authlib
 requests
 python-dotenv==1.0.1
 resend>=0.8.0
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

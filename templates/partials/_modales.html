@@ -378,9 +378,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
 
-            <!-- SECCIÓN: Copias de Seguridad (Backup JSON) -->
+            <!-- SECCIÓN: Copias de Seguridad (Backup JSON & Google Drive) -->
             <div class="border-b border-slate-100 dark:border-slate-700/60 pb-3">
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">Copia de Seguridad (Backup JSON)</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">Copia de Seguridad</label>
                 
                 <div class="space-y-2">
                     <!-- Exportar JSON -->
@@ -407,6 +407,29 @@ document.addEventListener("DOMContentLoaded", () => {
                             </label>
                         </div>
                     </form>
+
+                    <!-- Google Drive Backup -->
+                    <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-brands fa-google-drive text-amber-500 text-sm"></i>
+                            <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs">Google Drive</span>
+                        </div>
+
+                        {% if usuario and usuario.google_drive_sync_activa %}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-check"></i> Activo
+                                </span>
+                                <a href="{{ url_for('main.drive_sincronizar') }}" class="px-2 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-rotate text-[10px]"></i> Sincronizar
+                                </a>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('main.drive_conectar') }}" class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1">
+                                Conectar Drive
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
