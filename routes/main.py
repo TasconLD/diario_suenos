@@ -78,6 +78,10 @@ def index():
     
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # 0. Obtener datos del usuario (necesario para verificar google_id en el modal de cuenta)
+            cursor.execute("SELECT id, usuario, email, google_id FROM usuarios WHERE id = %s;", (usuario_id,))
+            usuario_actual = cursor.fetchone()
+
             cursor.execute(sql_query, parametros)
             suenos_filtrados = cursor.fetchall()
             
@@ -94,7 +98,7 @@ def index():
                     s['hora_formateada'] = None
                     s['hora'] = ''
 
-# --- MÉTRICAS Y ESTADÍSTICAS AVANZADAS ---
+            # --- MÉTRICAS Y ESTADÍSTICAS AVANZADAS ---
             total_recuerdos = stats.get('total', 0) if isinstance(stats, dict) else 0
             lucidos = stats.get('lucidos', 0) if isinstance(stats, dict) else 0
             pesadillas = stats.get('pesadillas', 0) if isinstance(stats, dict) else 0
@@ -177,6 +181,7 @@ def index():
         categoria_actual=categoria_filtro,
         emocion_actual=emocion_filtro,
         stats=stats or {},
+        usuario=usuario_actual,
         usuario_nombre=session.get('usuario_nombre', 'Usuario'),
         fecha_hoy=fecha_hoy,
         pct_lucidos=pct_lucidos,
