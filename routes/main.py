@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, Respon
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 from models import obtener_estadisticas
+import json
 from pdf_generator import generar_pdf_suenos, generar_pdf_diario_formateado, generar_pdf_estadisticas, generar_pdf_senales
 
 # BLOQUE: Inicialización del Blueprint principal
@@ -778,7 +779,7 @@ def exportar_personalizado():
         mimetype="application/pdf",
         headers={"Content-disposition": f"attachment; filename=Diario_Personalizado_{session['usuario_nombre']}.pdf"}
     )   
-    
+
 # BLOQUE: Ruta para exportar reporte de estadísticas generales a PDF
 @main_bp.route('/exportar/estadisticas')
 def exportar_estadisticas_pdf():
@@ -813,3 +814,133 @@ def exportar_senales_pdf():
         mimetype="application/pdf",
         headers={"Content-disposition": f"attachment; filename=Reporte_Senales_Oniricas_{session['usuario_nombre']}.pdf"}
     )
+    
+# BLOQUE: Exportación / Importación Manual de Base de Datos (JSON)
+@main_bp.route('/backup/exportar')
+def backup_exportar():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # 1. Exportar Sueños
+            cursor.execute("SELECT * FROM suenos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            suenos = cursor.fetchall() or []
+            for s in suenos:
+                if s.get('fecha'):
+                    s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
+                if s.get('hora'):
+                    s['hora'] = s['hora'].strftime('%H:%M:%S')
+
+            # 2. Exportar Señales Oníricas
+            cursor.execute("SELECT * FROM senales WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            senales = cursor.fetchall() or []
+
+            # 3. Exportar Objetivos
+            cursor.execute("SELECT * FROM objetivos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            objetivos = cursor.fetchall() or []
+            for o in objetivos:
+                if o.get('fecha_creacion'):
+                    o['fecha_creacion'] = o['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+
+    data_backup = {
+        "version": "1.0",
+        "fecha_backup": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "usuario": session.get('usuario_nombre', 'Usuario'),
+        "suenos": suenos,
+        "senales": senales,
+        "objetivos": objetivos
+    }
+
+    json_str = json.dumps(data_backup, ensure_ascii=False, indent=2)
+    filename = f"backup_diario_suenos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+    return Response(
+        json_str,
+        mimetype="application/json",
+        headers={"Content-disposition": f"attachment; filename={filename}"}
+    )
+
+
+@main_bp.route('/backup/importar', methods=['POST'])
+def backup_importar():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+
+    if 'backup_file' not in request.files:
+        flash("No se seleccionó ningún archivo.", "error")
+        return redirect(request.referrer or url_for('main.index'))
+
+    file = request.files['backup_file']
+    if file.filename == '':
+        flash("Nombre de archivo no válido.", "error")
+        return redirect(request.referrer or url_for('main.index'))
+
+    try:
+        data = json.load(file)
+    except Exception as e:
+        flash("El archivo subido no es un JSON válido.", "error")
+        return redirect(request.referrer or url_for('main.index'))
+
+    suenos = data.get('suenos', [])
+    senales = data.get('senales', [])
+    objetivos = data.get('objetivos', [])
+
+    insertados = 0
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # Importar Sueños
+            for s in suenos:
+                cursor.execute("""
+                    INSERT INTO suenos (usuario_id, titulo, descripcion, fecha, hora, lucido, pesadilla, salida_astral, destacado, emocion, categorias, tags, claridad)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                """, (
+                    usuario_id,
+                    s.get('titulo', 'Sin Título'),
+                    s.get('descripcion', ''),
+                    s.get('fecha'),
+                    s.get('hora'),
+                    s.get('lucido', False),
+                    s.get('pesadilla', False),
+                    s.get('salida_astral', False),
+                    s.get('destacado', False),
+                    s.get('emocion'),
+                    s.get('categorias'),
+                    s.get('tags'),
+                    s.get('claridad', 3)
+                ))
+                insertados += 1
+
+            # Importar Señales
+            for sen in senales:
+                cursor.execute("""
+                    INSERT INTO senales (usuario_id, nombre, categoria, significado)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING;
+                """, (
+                    usuario_id,
+                    sen.get('nombre'),
+                    sen.get('categoria'),
+                    sen.get('significado')
+                ))
+
+            # Importar Objetivos
+            for obj in objetivos:
+                cursor.execute("""
+                    INSERT INTO objetivos (usuario_id, titulo, descripcion, completado)
+                    VALUES (%s, %s, %s, %s);
+                """, (
+                    usuario_id,
+                    obj.get('titulo'),
+                    obj.get('descripcion'),
+                    obj.get('completado', False)
+                ))
+
+            conn.commit()
+
+    flash(f"Copia de seguridad restaurada con éxito ({insertados} registros importados).", "success")
+    return redirect(request.referrer or url_for('main.index'))

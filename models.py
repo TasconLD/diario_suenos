@@ -1,3 +1,4 @@
+import json
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
 
@@ -86,3 +87,108 @@ def cargar_datos_filtrados(usuario_id, fecha_inicio=None, fecha_fin=None, catego
                 else:
                     s['hora_formateada'] = None
             return suenos
+
+# BLOQUE: Exportación completa de base de datos a Diccionario JSON
+def obtener_backup_completo_usuario(usuario_id):
+    """
+    Obtiene todos los datos asociados a un usuario (sueños, señales y objetivos)
+    y los formatea para ser exportados como un objeto estructurado.
+    """
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # 1. Sueños
+            cursor.execute("SELECT * FROM suenos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            suenos = cursor.fetchall() or []
+            for s in suenos:
+                if s.get('fecha'):
+                    s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
+                if s.get('hora'):
+                    s['hora'] = s['hora'].strftime('%H:%M:%S')
+
+            # 2. Señales Oníricas
+            cursor.execute("SELECT * FROM senales WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            senales = cursor.fetchall() or []
+
+            # 3. Objetivos
+            cursor.execute("SELECT * FROM objetivos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            objetivos = cursor.fetchall() or []
+            for o in objetivos:
+                if o.get('fecha_creacion'):
+                    o['fecha_creacion'] = o['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
+
+            return {
+                "suenos": suenos,
+                "senales": senales,
+                "objetivos": objetivos
+            }
+
+# BLOQUE: Importación e inserción de Backup JSON
+def importar_backup_usuario(usuario_id, data_backup):
+    """
+    Recibe un diccionario con sueños, señales y objetivos, e inserta
+    los registros en la base de datos vinculados al usuario especificado.
+    Retorna el total de sueños importados.
+    """
+    suenos = data_backup.get('suenos', [])
+    senales = data_backup.get('senales', [])
+    objetivos = data_backup.get('objetivos', [])
+
+    total_insertados = 0
+
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # Insertar Sueños
+            for s in suenos:
+                cursor.execute("""
+                    INSERT INTO suenos (
+                        usuario_id, titulo, descripcion, fecha, hora, 
+                        lucido, pesadilla, salida_astral, destacado, 
+                        emocion, categorias, tags, claridad, calidad_sueno
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                """, (
+                    usuario_id,
+                    s.get('titulo', 'Sin Título'),
+                    s.get('descripcion', ''),
+                    s.get('fecha'),
+                    s.get('hora') if s.get('hora') != '' else None,
+                    s.get('lucido', False),
+                    s.get('pesadilla', False),
+                    s.get('salida_astral', False),
+                    s.get('destacado', False),
+                    s.get('emocion'),
+                    s.get('categorias'),
+                    s.get('tags'),
+                    s.get('claridad', 3),
+                    s.get('calidad_sueno', 3)
+                ))
+                total_insertados += 1
+
+            # Insertar Señales
+            for sen in senales:
+                cursor.execute("""
+                    INSERT INTO senales (usuario_id, nombre, categoria, significado)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING;
+                """, (
+                    usuario_id,
+                    sen.get('nombre'),
+                    sen.get('categoria'),
+                    sen.get('significado')
+                ))
+
+            # Insertar Objetivos
+            for obj in objetivos:
+                cursor.execute("""
+                    INSERT INTO objetivos (usuario_id, titulo, descripcion, completado)
+                    VALUES (%s, %s, %s, %s);
+                """, (
+                    usuario_id,
+                    obj.get('titulo'),
+                    obj.get('descripcion'),
+                    obj.get('completado', False)
+                ))
+
+            conn.commit()
+
+    return total_insertados
