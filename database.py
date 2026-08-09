@@ -59,4 +59,29 @@ def inicializar_base_datos():
                 ALTER COLUMN contrasena DROP NOT NULL;
             """)
 
+            # 4. Migración de esquema: Sincronización con Google Drive
+            cursor.execute("""
+                ALTER TABLE usuarios 
+                ADD COLUMN IF NOT EXISTS google_drive_refresh_token TEXT,
+                ADD COLUMN IF NOT EXISTS google_drive_sync_activa BOOLEAN DEFAULT FALSE;
+            """)
+
+            # 5. Migración de esquema: Gamificación (Racha activa)
+            cursor.execute("""
+                ALTER TABLE usuarios 
+                ADD COLUMN IF NOT EXISTS racha_actual INT DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS ultima_fecha_registro DATE;
+            """)
+
+            # 6. Tabla de Logros y Medallas Desbloqueadas
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS logros_usuario (
+                    id SERIAL PRIMARY KEY,
+                    usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+                    codigo_logro VARCHAR(50) NOT NULL,
+                    fecha_desbloqueo TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(usuario_id, codigo_logro)
+                );
+            """)
+
             conn.commit()

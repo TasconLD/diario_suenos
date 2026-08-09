@@ -17,6 +17,12 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 from services.crypto_service import cifrar_token, descifrar_token, InvalidToken
+from models import (
+    obtener_estadisticas,
+    actualizar_racha_usuario,
+    verificar_y_otorgar_logros,
+    obtener_estado_logros_usuario
+)
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
@@ -87,8 +93,8 @@ def index():
     
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            # 0. Obtener datos del usuario (necesario para verificar google_id en el modal de cuenta)
-            cursor.execute("SELECT id, usuario, email, google_id, google_drive_sync_activa FROM usuarios WHERE id = %s;", (usuario_id,))
+            # 0. Obtener datos del usuario (necesario para verificar google_id en el modal de cuenta y racha)
+            cursor.execute("SELECT id, usuario, email, google_id, google_drive_sync_activa, racha_actual FROM usuarios WHERE id = %s;", (usuario_id,))
             usuario_actual = cursor.fetchone()
 
             cursor.execute(sql_query, parametros)
@@ -183,6 +189,9 @@ def index():
             """, (usuario_id,))
             tendencia_mensual = cursor.fetchall() or []
 
+    # Obtención de estado de medallas y logros del usuario
+    logros_usuario = obtener_estado_logros_usuario(usuario_id)
+
     return render_template(
         'index.html', 
         suenos=suenos_filtrados, 
@@ -199,7 +208,8 @@ def index():
         top_senales=top_senales,
         top_emociones=top_emociones,
         top_palabras=top_palabras,
-        tendencia_mensual=tendencia_mensual
+        tendencia_mensual=tendencia_mensual,
+        logros=logros_usuario
     )
     
 # BLOQUE: Ruta para registrar un nuevo sueño
@@ -208,6 +218,7 @@ def registrar():
     if 'usuario_id' not in session:
         return redirect(url_for('auth.login'))
         
+    usuario_id = session['usuario_id']
     id_sueno = int(time.time() * 1000)
     titulo = request.form.get('titulo')
     
@@ -245,8 +256,16 @@ def registrar():
             cursor.execute("""
                 INSERT INTO suenos (id, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, usuario_id, tags)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-            """, (id_sueno, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, session['usuario_id'], tags))
+            """, (id_sueno, titulo, fecha, hora, descripcion, categorias, emocion, calidad_sueno, destacado, usuario_id, tags))
             conn.commit()
+
+    # Actualización de racha y evaluación de logros/medallas
+    actualizar_racha_usuario(usuario_id)
+    nuevos_logros = verificar_y_otorgar_logros(usuario_id)
+
+    if nuevos_logros:
+        for logro_titulo in nuevos_logros:
+            flash(f"¡Felicidades! Has desbloqueado la medalla: {logro_titulo}", "success")
     
     return redirect(url_for('main.index'))
 
@@ -1311,3 +1330,30 @@ def drive_sincronizar():
         flash("Ocurrió un error al sincronizar con Google Drive.", "error")
 
     return redirect(request.referrer or url_for("main.index"))
+
+# Ruta para la vista completa de Logros
+@main_bp.route('/logros')
+def logros():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT id, usuario, racha_actual FROM usuarios WHERE id = %s;", (usuario_id,))
+            usuario_actual = cursor.fetchone()
+
+    # Obtener el estado de logros del usuario (función definida en models.py o tu módulo de logros)
+    logros_usuario = obtener_estado_logros_usuario(usuario_id)
+    total_desbloqueados = sum(1 for l in logros_usuario if l.get('desbloqueado'))
+    total_logros = len(logros_usuario)
+    porcentaje = round((total_desbloqueados / total_logros * 100), 1) if total_logros > 0 else 0
+
+    return render_template(
+        'logros.html',
+        usuario=usuario_actual,
+        logros=logros_usuario,
+        total_desbloqueados=total_desbloqueados,
+        porcentaje_progreso=porcentaje
+    )

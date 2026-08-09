@@ -6,6 +6,48 @@
 <div class="max-w-6xl mx-auto px-4 py-4 md:py-8">
     {% include "partials/_header.html" %}
     {% include "partials/_stats.html" %}
+
+    <!-- Mini Resumen de Gamificación / Logros -->
+    <div class="mb-6 p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-6 w-full sm:w-auto justify-around sm:justify-start">
+            <!-- Racha Actual -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl">
+                    🔥
+                </div>
+                <div>
+                    <div class="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                        {{ usuario.racha_actual if usuario and usuario.racha_actual is defined else 0 }} días
+                    </div>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">Racha actual</span>
+                </div>
+            </div>
+
+            <div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+            <!-- Medallas Desbloqueadas -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-xl">
+                    🏆
+                </div>
+                <div>
+                    <div class="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                        {% set desbloqueados = logros | selectattr('desbloqueado', 'equalto', true) | list | length if logros else 0 %}
+                        {% set total_logros = logros | length if logros else 0 %}
+                        {{ desbloqueados }} / {{ total_logros }}
+                    </div>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">Medallas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enlace a la sección completa de logros -->
+        <a href="{{ url_for('main.logros') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800/50">
+            <span>Ver mis logros</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </a>
+    </div>
+
     {% include "partials/_filtros.html" %}
     {% include "partials/_timeline.html" %}
 </div>
@@ -140,8 +182,6 @@
 
     // ==========================================
     // 2. LÓGICA DE GRÁFICOS Y ALTERNANCIA
-    // (BLOQUE ÚNICO - antes estaba duplicado 3 veces,
-    // lo cual causaba el error "Canvas is already in use")
     // ==========================================
     window.instDona = null;
     window.instLinea = null;
@@ -152,8 +192,6 @@
         // 1. Gráfico de Dona (Distribución)
         const canvasDona = document.getElementById('chartCategorias');
         if (canvasDona) {
-            // Seguro anti-duplicado: si ya existía una instancia sobre este
-            // canvas (ej. por un hot-reload), la destruimos antes de crear otra.
             if (window.instDona) {
                 window.instDona.destroy();
             }

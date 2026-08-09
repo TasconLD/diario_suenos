@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Logros - Entrenador Onírico{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6 md:py-8">
+    
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-trophy text-amber-500"></i> Mis Logros y Medallas
+            </h1>
+            <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Rastrea tu constancia y desbloquea insignias explorando tu subconsciente.
+            </p>
+        </div>
+        <a href="{{ url_for('main.index') }}" class="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-200 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors w-fit">
+            <i class="fa-solid fa-arrow-left text-[11px]"></i> Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Tarjetas Destacadas: Racha y Resumen -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        
+        <!-- Racha Actual -->
+        <div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Racha Actual</span>
+                <h2 class="text-2xl font-black text-amber-500 mt-1">
+                    🔥 {{ usuario.racha_actual or 0 }} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">días</span>
+                </h2>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-fire"></i>
+            </div>
+        </div>
+
+        <!-- Medallas Desbloqueadas -->
+        <div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Desbloqueadas</span>
+                <h2 class="text-2xl font-black text-indigo-500 dark:text-indigo-400 mt-1">
+                    🏆 {{ total_desbloqueados }} / {{ logros|length }}
+                </h2>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+        </div>
+
+        <!-- Progreso Colección -->
+        <div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Progreso Colección</span>
+                <span class="text-xs font-bold text-indigo-500 dark:text-indigo-400">{{ porcentaje_progreso }}%</span>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" style="width: {{ porcentaje_progreso }}%"></div>
+            </div>
+            <span class="text-[10px] text-slate-400 mt-2 text-right">Completado</span>
+        </div>
+
+    </div>
+
+    <!-- Título Galería -->
+    <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-medal text-amber-500"></i> Galería de Insignias
+    </h2>
+
+    <!-- Grid de Medallas / Insignias -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for logro in logros %}
+        <div class="p-4 rounded-xl border text-center flex flex-col items-center justify-between transition-all shadow-sm
+            {% if logro.desbloqueado %}
+                bg-white dark:bg-slate-800 border-amber-400/50 dark:border-amber-500/30
+            {% else %}
+                bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/40 opacity-70
+            {% endif %}">
+            
+            <!-- Icono de la Medalla -->
+            <div class="my-3">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center text-2xl border
+                    {% if logro.desbloqueado %}
+                        bg-amber-500/10 text-amber-500 border-amber-400/40 shadow-sm
+                    {% else %}
+                        bg-slate-200/50 dark:bg-slate-700/30 text-slate-400 border-slate-300 dark:border-slate-600/40
+                    {% endif %}">
+                    {% if logro.desbloqueado %}
+                        <i class="fa-solid {{ logro.icono or 'fa-award' }}"></i>
+                    {% else %}
+                        <i class="fa-solid fa-lock"></i>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Título y Descripción -->
+            <div class="flex-1 flex flex-col justify-center">
+                <h3 class="text-sm font-bold mb-1 {% if logro.desbloqueado %}text-slate-800 dark:text-slate-100{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+                    {{ logro.titulo }}
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                    {{ logro.descripcion }}
+                </p>
+            </div>
+
+            <!-- Estado / Fecha -->
+            <div class="w-full pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                {% if logro.desbloqueado %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                        <i class="fa-solid fa-check text-[9px]"></i> Desbloqueado
+                    </span>
+                    {% if logro.fecha %}
+                        <div class="text-[10px] text-slate-400 mt-1">
+                            {{ logro.fecha.strftime('%d/%m/%Y') if logro.fecha.strftime else logro.fecha }}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 bg-slate-200/50 dark:bg-slate-700/30 px-2 py-0.5 rounded-full">
+                        <i class="fa-solid fa-lock text-[9px]"></i> Bloqueado
+                    </span>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

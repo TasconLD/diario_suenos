@@ -81,6 +81,12 @@
             <i class="fa-solid fa-bell"></i>
             <span>Recordatorios</span>
         </a>
+
+        <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'main.logros' %}active{% endif %}" href="{{ url_for('main.logros') }}">
+            <i class="fas fa-trophy me-1 text-warning"></i> Mis Logros
+        </a>
+        </li>
         
         <a href="{{ url_for('main.exportar') }}" 
                 class="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-sm">
