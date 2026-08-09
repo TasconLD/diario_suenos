@@ -16,6 +16,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
+from services.crypto_service import cifrar_token, descifrar_token, InvalidToken
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
@@ -1025,13 +1026,33 @@ def obtener_credenciales_drive(usuario_id):
     if not res or not res.get("google_drive_refresh_token"):
         return None
 
+    token_guardado = res["google_drive_refresh_token"]
+
+    try:
+        refresh_token = descifrar_token(token_guardado)
+    except InvalidToken:
+        # Token guardado antes de activar el cifrado (texto plano legado).
+        # Lo usamos igual esta vez y de paso lo migramos a formato cifrado
+        # para que quede protegido a partir de ahora.
+        refresh_token = token_guardado
+        try:
+            token_cifrado = cifrar_token(refresh_token)
+            with obtener_conexion() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "UPDATE usuarios SET google_drive_refresh_token = %s WHERE id = %s;",
+                        (token_cifrado, usuario_id),
+                    )
+                conn.commit()
+        except Exception as e:
+            print(f"No se pudo migrar el token legado de Drive a formato cifrado: {e}")
+
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
-    
 
     return Credentials(
         token=None,
-        refresh_token=res["google_drive_refresh_token"],
+        refresh_token=refresh_token,
         token_uri="https://oauth2.googleapis.com/token",
         client_id=client_id,
         client_secret=client_secret,
@@ -1127,6 +1148,7 @@ def drive_callback():
 
         if credentials.refresh_token:
             usuario_id = session["usuario_id"]
+            token_cifrado = cifrar_token(credentials.refresh_token)
             with obtener_conexion() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
@@ -1135,7 +1157,7 @@ def drive_callback():
                         SET google_drive_refresh_token = %s, google_drive_sync_activa = TRUE 
                         WHERE id = %s;
                     """,
-                        (credentials.refresh_token, usuario_id),
+                        (token_cifrado, usuario_id),
                     )
                 conn.commit()
 
