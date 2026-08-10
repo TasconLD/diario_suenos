@@ -23,9 +23,15 @@ from models import (
     verificar_y_otorgar_logros,
     obtener_estado_logros_usuario
 )
+from translations import translate
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
+
+
+# BLOQUE: Helper de traducción (usa el idioma guardado en sesión)
+def _(clave):
+    return translate(clave, session.get('lang', 'es'))
 
 # Lista de palabras a ignorar (stopwords en español)
 STOPWORDS_ES = {
@@ -265,7 +271,7 @@ def registrar():
 
     if nuevos_logros:
         for logro_titulo in nuevos_logros:
-            flash(f"¡Felicidades! Has desbloqueado la medalla: {logro_titulo}", "success")
+            flash(_('msg_badge_unlocked').format(logro_titulo=logro_titulo), "success")
     
     return redirect(url_for('main.index'))
 
@@ -429,7 +435,7 @@ def guardar_senal():
             conn.commit()
 
     # FIX BUG 2 (UX): Feedback explícito al usuario para saber que se guardó correctamente
-    flash('¡Interpretación guardada con éxito!', 'exito')
+    flash(_('msg_interpretation_saved'), 'exito')
 
     response = redirect(url_for('main.detalle_senal', tag=tag))
     
@@ -483,7 +489,7 @@ def crear_objetivo():
     categoria = request.form.get('categoria', 'Exploración')
 
     if not titulo:
-        flash('El título del objetivo es obligatorio.', 'error')
+        flash(_('msg_goal_title_required'), 'error')
         return redirect(url_for('main.objetivos'))
 
     with obtener_conexion() as conn:
@@ -494,7 +500,7 @@ def crear_objetivo():
             """, (usuario_id, titulo, descripcion, prioridad, categoria))
             conn.commit()
 
-    flash('¡Objetivo creado con éxito! Mucha suerte en tus sueños.', 'exito')
+    flash(_('msg_goal_created_success'), 'exito')
     return redirect(url_for('main.objetivos'))
 
 
@@ -514,7 +520,7 @@ def cumplir_objetivo(objetivo_id):
             """, (objetivo_id, usuario_id))
             conn.commit()
 
-    flash('🎉 ¡Enhorabuena! Has vuelto a cumplir esta meta onírica.', 'exito')
+    flash(_('msg_goal_fulfilled_again'), 'exito')
     return redirect(url_for('main.objetivos'))
 
 
@@ -533,7 +539,7 @@ def eliminar_objetivo(objetivo_id):
             """, (objetivo_id, usuario_id))
             conn.commit()
 
-    flash('Objetivo eliminado correctamente.', 'info')
+    flash(_('msg_goal_deleted'), 'info')
     return redirect(url_for('main.objetivos'))
 
 
@@ -556,63 +562,63 @@ def eliminar_senal(tag):
 
 import random
 
-# Datos locales para el Entrenador Onírico
+# Datos locales para el Entrenador Onírico (basados en claves de traducción, se resuelven en la ruta)
 TECNICAS_ONIRICAS = [
     {
         "id": "mild",
-        "nombre": "MILD (Mnemonic Induction of Lucid Dreams)",
-        "dificultad": "Principiante",
+        "nombre_key": "tecnica_mild_nombre",
+        "dificultad_key": "dificultad_principiante",
         "icono": "fa-brain",
-        "resumen": "Inducción mnemónica repitiendo un mantra antes de dormir.",
-        "pasos": [
-            "Despiértate tras 4-5 horas de sueño y mantente despierto 15 minutos.",
-            "Visualízate volviendo a tu último sueño, pero esta vez dándote cuenta de que estás soñando.",
-            "Repite mentalmente: 'La próxima vez que esté soñando, recordaré que estoy soñando'.",
-            "Mantiene esa intención firme mientras te vuelves a dormir."
+        "resumen_key": "tecnica_mild_resumen",
+        "pasos_keys": [
+            "tecnica_mild_paso_1",
+            "tecnica_mild_paso_2",
+            "tecnica_mild_paso_3",
+            "tecnica_mild_paso_4"
         ]
     },
     {
         "id": "wild",
-        "nombre": "WILD (Wake Initiated Lucid Dreams)",
-        "dificultad": "Avanzado",
+        "nombre_key": "tecnica_wild_nombre",
+        "dificultad_key": "dificultad_avanzado",
         "icono": "fa-bed",
-        "resumen": "Pasar directamente del estado de vigilia al sueño lúcido sin perder la consciencia.",
-        "pasos": [
-            "Acuéstate completamente relajado tras 5 horas de sueño.",
-            "Mantén la mente alerta mientras tu cuerpo entra en parálisis del sueño y relajación profunda.",
-            "Observa las imágenes hipnagógicas (luces o formas tras los párpados) sin engancharte emocionalmente.",
-            "Permite que la escena del sueño se forme a tu alrededor y entra en ella conscientemente."
+        "resumen_key": "tecnica_wild_resumen",
+        "pasos_keys": [
+            "tecnica_wild_paso_1",
+            "tecnica_wild_paso_2",
+            "tecnica_wild_paso_3",
+            "tecnica_wild_paso_4"
         ]
     },
     {
         "id": "dild",
-        "nombre": "DILD (Dream Initiated Lucid Dreams)",
-        "dificultad": "Intermedio",
+        "nombre_key": "tecnica_dild_nombre",
+        "dificultad_key": "dificultad_intermedio",
         "icono": "fa-wand-magic-sparkles",
-        "resumen": "Volverse lúcido dentro del sueño al detectar una señal onírica o anomalía.",
-        "pasos": [
-            "Habitúa a tu mente durante el día a cuestionar la realidad (Pruebas de Realidad / Reality Checks).",
-            "Cuando notes algo raro en tu sueño (una señal de tu lista), pregúntate: '¿Estoy soñando?'.",
-            "Realiza una prueba física (mirar tus manos o intentar empujar un dedo a través de tu palma).",
-            "Al confirmar que estás soñando, estabiliza el entorno frotando tus manos."
+        "resumen_key": "tecnica_dild_resumen",
+        "pasos_keys": [
+            "tecnica_dild_paso_1",
+            "tecnica_dild_paso_2",
+            "tecnica_dild_paso_3",
+            "tecnica_dild_paso_4"
         ]
     }
 ]
 
-CONSEJOS_DIARIOS = [
-    "Mantén una libreta o esta app abierta al lado de tu cama. Al despertar, no te muevas durante 30 segundos y rememora las imágenes del sueño.",
-    "Realiza al menos 5 'Pruebas de Realidad' al día: mira tu reloj, aparta la vista y vuelve a mirarlo. Si las horas cambian, estás soñando.",
-    "Evita las pantallas 45 minutos antes de dormir para aumentar tus niveles de melatonina y la claridad de tu fase REM.",
-    "Si te despiertas a medianoche, anota palabras clave de tus sueños antes de volver a dormirte para no perder los detalles al amanecer.",
-    "La firmeza en la intención supera al esfuerzo físico: cree plenamente que hoy tendrás un sueño lúcido antes de cerrar los ojos."
+CONSEJOS_DIARIOS_KEYS = [
+    "consejo_diario_1",
+    "consejo_diario_2",
+    "consejo_diario_3",
+    "consejo_diario_4",
+    "consejo_diario_5"
 ]
 
 CONSEJOS_HIGIENE = [
-    {"id": "pantallas", "texto": "Sin pantallas 45 min antes de acostarte"},
-    {"id": "horario", "texto": "Irte a dormir a la misma hora"},
-    {"id": "oscuridad", "texto": "Habitación fresca, oscura y silenciosa"},
-    {"id": "cafeina", "texto": "Cero cafeína 6 horas antes de dormir"},
-    {"id": "meditacion", "texto": "5 minutos de respiración profunda en la cama"}
+    {"id": "pantallas", "texto_key": "higiene_pantallas"},
+    {"id": "horario", "texto_key": "higiene_horario"},
+    {"id": "oscuridad", "texto_key": "higiene_oscuridad"},
+    {"id": "cafeina", "texto_key": "higiene_cafeina"},
+    {"id": "meditacion", "texto_key": "higiene_meditacion"}
 ]
 
 
@@ -622,14 +628,33 @@ def entrenador():
     if 'usuario_id' not in session:
         return redirect(url_for('auth.login'))
 
+    # Traducción dinámica de las técnicas oníricas según el idioma activo
+    tecnicas = [
+        {
+            "id": t["id"],
+            "nombre": _(t["nombre_key"]),
+            "dificultad": _(t["dificultad_key"]),
+            "icono": t["icono"],
+            "resumen": _(t["resumen_key"]),
+            "pasos": [_(paso_key) for paso_key in t["pasos_keys"]]
+        }
+        for t in TECNICAS_ONIRICAS
+    ]
+
     # Seleccionar consejo del día basado en el día actual
-    idx_consejo = random.Random().randint(0, len(CONSEJOS_DIARIOS) - 1)
-    consejo_hoy = CONSEJOS_DIARIOS[idx_consejo]
+    idx_consejo = random.Random().randint(0, len(CONSEJOS_DIARIOS_KEYS) - 1)
+    consejo_hoy = _(CONSEJOS_DIARIOS_KEYS[idx_consejo])
+
+    # Traducción dinámica de la checklist de higiene del sueño
+    higienes = [
+        {"id": h["id"], "texto": _(h["texto_key"])}
+        for h in CONSEJOS_HIGIENE
+    ]
 
     return render_template('entrenador.html', 
-                           tecnicas=TECNICAS_ONIRICAS, 
+                           tecnicas=tecnicas, 
                            consejo=consejo_hoy,
-                           higienes=CONSEJOS_HIGIENE)
+                           higienes=higienes)
     
 
 #BLOQUE: Rutas para el Mapa Onírico
@@ -903,7 +928,7 @@ def backup_exportar():
 
     except Exception as e:
         print(f"Error al exportar respaldo: {e}")
-        flash("Ocurrió un error al generar la copia de seguridad.", "error")
+        flash(_('msg_backup_export_error'), "error")
         return redirect(request.referrer or url_for('main.index'))
 
 
@@ -915,18 +940,18 @@ def backup_importar():
     usuario_id = session['usuario_id']
 
     if 'backup_file' not in request.files:
-        flash("No se seleccionó ningún archivo.", "error")
+        flash(_('msg_no_file_selected'), "error")
         return redirect(request.referrer or url_for('main.index'))
 
     file = request.files['backup_file']
     if file.filename == '':
-        flash("Nombre de archivo no válido.", "error")
+        flash(_('msg_invalid_filename'), "error")
         return redirect(request.referrer or url_for('main.index'))
 
     try:
         data = json.load(file)
     except Exception as e:
-        flash("El archivo subido no es un JSON válido.", "error")
+        flash(_('msg_invalid_json_file'), "error")
         return redirect(request.referrer or url_for('main.index'))
 
     suenos = data.get('suenos', [])
@@ -1015,11 +1040,11 @@ def backup_importar():
 
             conn.commit()
 
-        flash(f"Copia de seguridad restaurada con éxito ({insertados} sueños importados).", "success")
+        flash(_('msg_backup_restored').format(insertados=insertados), "success")
 
     except Exception as e:
         print(f"Error al importar respaldo: {e}")
-        flash("Ocurrió un error al procesar la importación en la base de datos.", "error")
+        flash(_('msg_backup_import_error'), "error")
 
     return redirect(request.referrer or url_for('main.index'))
 
@@ -1184,17 +1209,17 @@ def drive_callback():
             session.pop("oauth_drive_state", None)
             session.pop("oauth_drive_code_verifier", None)
 
-            flash("Google Drive vinculado exitosamente.", "success")
+            flash(_('msg_drive_linked_success'), "success")
         else:
             flash(
-                "No se pudo obtener el acceso continuo a Google Drive. Reintenta la vinculación.",
+                _('msg_drive_link_incomplete'),
                 "warning",
             )
 
     except Exception as e:
         print(f"Error detallado en drive_callback: {e}")
         flash(
-            "Ocurrió un error al vincular tu cuenta de Google Drive. Inténtalo nuevamente.",
+            _('msg_drive_link_error'),
             "error",
         )
 
@@ -1210,7 +1235,7 @@ def drive_sincronizar():
     creds = obtener_credenciales_drive(usuario_id)
 
     if not creds:
-        flash("Debes vincular tu cuenta de Google Drive primero.", "warning")
+        flash(_('msg_drive_not_linked'), "warning")
         return redirect(url_for("main.drive_conectar"))
 
     try:
@@ -1321,13 +1346,13 @@ def drive_sincronizar():
             ).execute()
 
         flash(
-            "Copia de seguridad sincronizada exitosamente en tu Google Drive.",
+            _('msg_drive_sync_success'),
             "success",
         )
 
     except Exception as e:
         print(f"Error al sincronizar con Google Drive: {e}")
-        flash("Ocurrió un error al sincronizar con Google Drive.", "error")
+        flash(_('msg_drive_sync_error'), "error")
 
     return redirect(request.referrer or url_for("main.index"))
 
@@ -1357,3 +1382,23 @@ def logros():
         total_desbloqueados=total_desbloqueados,
         porcentaje_progreso=porcentaje
     )
+    
+# BLOQUE: Cambiar idioma de la aplicación
+@main_bp.route('/cambiar-idioma/<lang>')
+def cambiar_idioma(lang):
+    if lang in ['es', 'en']:
+        session['lang'] = lang
+        
+        # Opcional: Actualizar el idioma preferido en la BD si el usuario está autenticado
+        if 'usuario_id' in session:
+            try:
+                with obtener_conexion() as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute("UPDATE usuarios SET idioma = %s WHERE id = %s;", (lang, session['usuario_id']))
+            except Exception as e:
+                # Si la columna 'idioma' aún no existe en DB, no detendrá el flujo
+                pass
+
+    # Redirigir a la página donde estaba el usuario (o al home por defecto)
+    referrer = request.referrer or url_for('main.index')
+    return redirect(referrer)

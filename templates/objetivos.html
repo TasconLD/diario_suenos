@@ -1,31 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %}Objetivos Lúcidos - Diario de Sueños{% endblock %}
+{% block title %}{{ _('goals_page_title') }} - {{ _('app_title') }}{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
 
-<!-- BLOQUE: Cabecera principal con botón de volver -->
+    <!-- BLOQUE: Cabecera principal con botón de volver -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3">
             <!-- BOTÓN DE VOLVER -->
             <a href="{{ url_for('main.index') }}" 
                class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition border border-slate-200 dark:border-slate-700 shadow-sm"
-               title="Volver al Menú Principal">
+               title="{{ _('back_to_menu') }}">
                 <i class="fa-solid fa-arrow-left text-base"></i>
             </a>
             <div>
                 <h1 class="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-bullseye text-indigo-500"></i> Objetivos para Sueños Lúcidos
+                    <i class="fa-solid fa-bullseye text-indigo-500"></i> {{ _('goals_header_title') }}
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Define tus metas oníricas y registra cuántas veces las cumples.
+                    {{ _('goals_header_subtitle') }}
                 </p>
             </div>
         </div>
 
         <button onclick="abrirModalObjetivo()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-2 self-end md:self-auto">
-            <i class="fa-solid fa-plus"></i> Nueva Meta Onírica
+            <i class="fa-solid fa-plus"></i> {{ _('btn_new_goal') }}
         </button>
     </div>
 
@@ -50,10 +50,10 @@
                         <!-- Header de la tarjeta: Prioridad y Categoría -->
                         <div class="flex justify-between items-center mb-3">
                             <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border 
-                                {% if obj.prioridad == 'Alta' %}bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20
-                                {% elif obj.prioridad == 'Media' %}bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20
+                                {% if obj.prioridad == 'Alta' or obj.prioridad == 'High' %}bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20
+                                {% elif obj.prioridad == 'Media' or obj.prioridad == 'Medium' %}bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20
                                 {% else %}bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20{% endif %}">
-                                Prioridad {{ obj.prioridad }}
+                                {{ _('label_priority') }} {{ obj.prioridad }}
                             </span>
                             <span class="text-[10px] bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded font-semibold border border-indigo-200 dark:border-indigo-500/20">
                                 {{ obj.categoria }}
@@ -69,26 +69,26 @@
                                 {{ obj.descripcion }}
                             </p>
                         {% else %}
-                            <p class="text-xs text-slate-400 dark:text-slate-500 italic mb-4">Sin descripción adicional.</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 italic mb-4">{{ _('no_description') }}</p>
                         {% endif %}
                     </div>
 
                     <!-- Footer de la tarjeta: Contador y Botón Cumplir -->
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-3">
                         <div class="flex justify-between items-center">
-                            <span class="text-[10px] text-slate-400 uppercase font-bold">Cumplido:</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold">{{ _('label_fulfilled_times') }}</span>
                             <span class="text-sm font-black text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-800/40">
-                                ✨ {{ obj.veces_cumplido }} {% if obj.veces_cumplido == 1 %}vez{% else %}veces{% endif %}
+                                ✨ {{ obj.veces_cumplido }} {% if obj.veces_cumplido == 1 %}{{ _('time_singular') }}{% else %}{{ _('time_plural') }}{% endif %}
                             </span>
                         </div>
 
                         <div class="flex items-center gap-2">
                             <form action="{{ url_for('main.cumplir_objetivo', objetivo_id=obj.id) }}" method="POST" class="w-full">
                                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
-                                    <i class="fa-solid fa-circle-check"></i> ¡He vuelto a cumplirlo! (+1)
+                                    <i class="fa-solid fa-circle-check"></i> {{ _('btn_accomplished_again') }}
                                 </button>
                             </form>
-                            <form action="{{ url_for('main.eliminar_objetivo', objetivo_id=obj.id) }}" method="POST" onsubmit="return confirm('¿Borrar este objetivo?')">
+                            <form action="{{ url_for('main.eliminar_objetivo', objetivo_id=obj.id) }}" method="POST" onsubmit="return confirm('{{ _('confirm_delete_goal') }}')">
                                 <button type="submit" class="text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition">
                                     <i class="fa-regular fa-trash-can text-xs"></i>
                                 </button>
@@ -101,10 +101,10 @@
     {% else %}
         <div class="text-center py-12 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
             <i class="fa-solid fa-wand-magic-sparkles text-4xl text-indigo-400 mb-3"></i>
-            <h3 class="text-base font-bold text-slate-700 dark:text-slate-200">Aún no tienes objetivos planteados</h3>
-            <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">Plantéate metas para tus próximos sueños lúcidos: volar a la luna, pedir consejo a un personaje de sueño o dominar la telequinesis.</p>
+            <h3 class="text-base font-bold text-slate-700 dark:text-slate-200">{{ _('empty_goals_title') }}</h3>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">{{ _('empty_goals_subtitle') }}</p>
             <button onclick="abrirModalObjetivo()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
-                Crear Mi Primer Objetivo
+                {{ _('btn_create_first_goal') }}
             </button>
         </div>
     {% endif %}
@@ -116,7 +116,7 @@
     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
             <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-bullseye text-indigo-500"></i> Crear Nueva Meta Onírica
+                <i class="fa-solid fa-bullseye text-indigo-500"></i> {{ _('modal_goal_title') }}
             </h3>
             <button onclick="cerrarModalObjetivo()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-base">
                 <i class="fa-solid fa-xmark"></i>
@@ -125,44 +125,44 @@
 
         <form action="{{ url_for('main.crear_objetivo') }}" method="POST" class="p-5 space-y-4 text-xs">
             <div>
-                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Título de la Meta *</label>
-                <input type="text" name="titulo" required placeholder="Ej: Volar por encima de las nubes"
+                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">{{ _('field_goal_title') }} *</label>
+                <input type="text" name="titulo" required placeholder="{{ _('placeholder_goal_title') }}"
                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 focus:border-indigo-500 outline-none">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Categoría</label>
+                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">{{ _('field_category') }}</label>
                     <select name="categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-2 text-slate-800 dark:text-slate-100 outline-none">
-                        <option value="Exploración">🌍 Exploración</option>
-                        <option value="Habilidad">⚡ Habilidad / Poder</option>
-                        <option value="Subconsciente">🧠 Subconsciente</option>
-                        <option value="Transformación">🐺 Transformación</option>
-                        <option value="Creatividad">🎨 Creatividad</option>
+                        <option value="Exploración">🌍 {{ _('cat_exploration') }}</option>
+                        <option value="Habilidad">⚡ {{ _('cat_ability') }}</option>
+                        <option value="Subconsciente">🧠 {{ _('cat_subconscious') }}</option>
+                        <option value="Transformación">🐺 {{ _('cat_transformation') }}</option>
+                        <option value="Creatividad">🎨 {{ _('cat_creativity') }}</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Prioridad</label>
+                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">{{ _('field_priority') }}</label>
                     <select name="prioridad" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-2 text-slate-800 dark:text-slate-100 outline-none">
-                        <option value="Alta">🔴 Alta</option>
-                        <option value="Media" selected>🟡 Media</option>
-                        <option value="Baja">🟢 Baja</option>
+                        <option value="Alta">🔴 {{ _('prio_high') }}</option>
+                        <option value="Media" selected>🟡 {{ _('prio_medium') }}</option>
+                        <option value="Baja">🟢 {{ _('prio_low') }}</option>
                     </select>
                 </div>
             </div>
 
             <div>
-                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Descripción / Instrucciones personales</label>
-                <textarea name="descripcion" rows="3" placeholder="Ej: Frotarme las manos para estabilizar el sueño antes de despegar..."
+                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">{{ _('field_goal_description') }}</label>
+                <textarea name="descripcion" rows="3" placeholder="{{ _('placeholder_goal_description') }}"
                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-800 dark:text-slate-100 resize-none focus:border-indigo-500 outline-none"></textarea>
             </div>
 
             <div class="pt-2 flex justify-end gap-2">
                 <button type="button" onclick="cerrarModalObjetivo()" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-semibold rounded-xl">
-                    Cancelar
+                    {{ _('btn_cancel') }}
                 </button>
                 <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-md">
-                    Guardar Meta
+                    {{ _('btn_save_goal') }}
                 </button>
             </div>
         </form>

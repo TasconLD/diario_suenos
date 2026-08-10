@@ -6,8 +6,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from database import obtener_conexion
 from itsdangerous import URLSafeTimedSerializer
 from services.email_service import EmailService
+from translations import translate
 
 auth_bp = Blueprint('auth', __name__)
+
+
+# BLOQUE: Helper de traducción (usa el idioma guardado en sesión)
+def _(clave):
+    return translate(clave, session.get('lang', 'es'))
+
 
 # BLOQUE: Login
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -17,7 +24,7 @@ def login():
         contrasena = request.form.get('contrasena') or ''
         
         if not nombre_usuario or not contrasena:
-            return render_template('login.html', error="Por favor completa todos los campos")
+            return render_template('login.html', error=_('msg_login_missing_fields'))
         
         with obtener_conexion() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -29,7 +36,7 @@ def login():
                     session['usuario_nombre'] = user['usuario']
                     return redirect(url_for('main.index'))
                 else:
-                    return render_template('login.html', error="Usuario o contraseña incorrectos")
+                    return render_template('login.html', error=_('msg_login_invalid_credentials'))
                     
     return render_template('login.html')
 
@@ -47,7 +54,7 @@ def google_authorize():
     user_info = token.get('userinfo')
     
     if not user_info:
-        flash("Error al obtener datos de Google.", "error")
+        flash(_('msg_google_data_error'), "error")
         return redirect(url_for('auth.login'))
     
     google_sub = user_info['sub']
@@ -61,13 +68,13 @@ def google_authorize():
                 cursor.execute("SELECT id FROM usuarios WHERE google_id = %s AND id != %s;", (google_sub, usuario_id))
                 existente = cursor.fetchone()
                 if existente:
-                    flash('Esta cuenta de Google ya está vinculada a otro usuario.', 'error')
+                    flash(_('msg_google_already_linked'), 'error')
                     return redirect(url_for('main.index'))
 
                 cursor.execute("UPDATE usuarios SET google_id = %s WHERE id = %s;", (google_sub, usuario_id))
                 conn.commit()
 
-        flash('¡Cuenta de Google vinculada con éxito!', 'success')
+        flash(_('msg_google_linked_success'), 'success')
         return redirect(url_for('main.index'))
 
     # CASO 2: El usuario NO ha iniciado sesión -> Quiere HACER LOGIN con Google
@@ -109,7 +116,7 @@ def desvincular_oauth(proveedor):
     destino_redirect = request.referrer or url_for('main.index')
 
     if proveedor != 'google':
-        flash('Proveedor no válido o no soportado.', 'error')
+        flash(_('msg_invalid_provider'), 'error')
         return redirect(destino_redirect)
 
     with obtener_conexion() as conn:
@@ -118,19 +125,19 @@ def desvincular_oauth(proveedor):
             user = cursor.fetchone()
 
             if not user or not user['google_id']:
-                flash('No hay ninguna cuenta de Google vinculada.', 'error')
+                flash(_('msg_google_not_linked'), 'error')
                 return redirect(destino_redirect)
 
             # Seguridad: Impedir la desvinculación si el usuario no tiene una contraseña funcional configurada
             # (evita que la cuenta quede bloqueada e inaccesible).
             if not user['contrasena']:
-                flash('Debes establecer una contraseña antes de desvincular tu cuenta de Google.', 'error')
+                flash(_('msg_need_password_before_unlink'), 'error')
                 return redirect(destino_redirect)
 
             cursor.execute("UPDATE usuarios SET google_id = NULL WHERE id = %s;", (usuario_id,))
             conn.commit()
 
-    flash('¡Cuenta de Google desvinculada con éxito!', 'success')
+    flash(_('msg_google_unlinked_success'), 'success')
     return redirect(destino_redirect)
 
 # BLOQUE: Registro de usuarios
@@ -142,7 +149,7 @@ def registro():
         contrasena = request.form.get('contrasena')
 
         if not usuario or not email or not contrasena:
-            return render_template('registro.html', error="Todos los campos son obligatorios.")
+            return render_template('registro.html', error=_('msg_register_fields_required'))
 
         contrasena_hash = generate_password_hash(contrasena)
 
@@ -154,7 +161,7 @@ def registro():
                         (usuario, email)
                     )
                     if cursor.fetchone():
-                        return render_template('registro.html', error="El nombre de usuario o el correo ya están registrados.")
+                        return render_template('registro.html', error=_('msg_register_user_exists'))
 
                     cursor.execute(
                         "INSERT INTO usuarios (usuario, email, contrasena, email_verificado) VALUES (%s, %s, %s, FALSE);",
@@ -167,12 +174,12 @@ def registro():
             url_confirmacion = url_for('auth.confirmar_email', token=token, _external=True)
             EmailService.enviar_correo_verificacion(email, url_confirmacion)
             
-            flash('¡Cuenta creada exitosamente! Se ha enviado un correo para verificar tu cuenta.', 'success')
+            flash(_('msg_register_created_success'), 'success')
             return redirect(url_for('auth.login'))
 
         except Exception as e:
             print(f"Error en registro: {e}")
-            return render_template('registro.html', error="Ocurrió un error al registrar la cuenta.")
+            return render_template('registro.html', error=_('msg_register_error'))
 
     return render_template('registro.html')
 
@@ -190,7 +197,7 @@ def cambiar_contrasena():
     destino_redirect = request.referrer or url_for('main.index')
 
     if contrasena_nueva != contrasena_confirmar:
-        flash('Las contraseñas nuevas no coinciden.', 'error')
+        flash(_('msg_password_mismatch'), 'error')
         return redirect(destino_redirect)
 
     with obtener_conexion() as conn:
@@ -199,7 +206,7 @@ def cambiar_contrasena():
             user = cursor.fetchone()
             
             if not user or not check_password_hash(user['contrasena'], contrasena_actual):
-                flash('La contraseña actual es incorrecta.', 'error')
+                flash(_('msg_current_password_incorrect'), 'error')
                 return redirect(destino_redirect)
 
             nueva_encriptada = generate_password_hash(contrasena_nueva)
@@ -209,7 +216,7 @@ def cambiar_contrasena():
             )
             conn.commit()
 
-    flash('¡Contraseña actualizada con éxito!', 'success')
+    flash(_('msg_password_updated_success'), 'success')
     return redirect(destino_redirect)
 
 # BLOQUE: Tokens de Verificación de Email
@@ -228,7 +235,7 @@ def confirmar_token_verificacion(token, max_age=86400):  # 24 horas
 def confirmar_email(token):
     email = confirmar_token_verificacion(token)
     if not email:
-        flash('El enlace de verificación es inválido o ha expirado.', 'error')
+        flash(_('msg_verification_link_invalid'), 'error')
         return redirect(url_for('auth.login'))
 
     try:
@@ -240,10 +247,10 @@ def confirmar_email(token):
                 )
                 conn.commit()
 
-        flash('¡Tu correo electrónico ha sido verificado con éxito!', 'success')
+        flash(_('msg_email_verified_success'), 'success')
     except Exception as e:
         print(f"Error al confirmar email: {e}")
-        flash('Ocurrió un error al verificar tu cuenta.', 'error')
+        flash(_('msg_email_verification_error'), 'error')
 
     return redirect(url_for('auth.login'))
 
@@ -275,7 +282,7 @@ def solicitar_reset():
                 url_reset = url_for('auth.reset_password', token=token, _external=True)
                 EmailService.enviar_correo_restablecimiento(email, url_reset)
 
-        flash('Si el correo está registrado, recibirás un enlace de recuperación.', 'success')
+        flash(_('msg_reset_link_sent_generic'), 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('solicitar_reset.html')
@@ -284,13 +291,13 @@ def solicitar_reset():
 def reset_password(token):
     email = confirmar_token_reset(token)
     if not email:
-        flash('El enlace de restablecimiento es inválido o ha expirado.', 'error')
+        flash(_('msg_reset_link_invalid'), 'error')
         return redirect(url_for('auth.solicitar_reset'))
 
     if request.method == 'POST':
         nueva_contrasena = request.form.get('contrasena')
         if not nueva_contrasena:
-            return render_template('reset_password.html', error="La contraseña no puede estar vacía.")
+            return render_template('reset_password.html', error=_('msg_password_empty'))
 
         nueva_hash = generate_password_hash(nueva_contrasena)
 
@@ -302,7 +309,7 @@ def reset_password(token):
                 )
                 conn.commit()
 
-        flash('¡Tu contraseña ha sido actualizada exitosamente! Ya puedes iniciar sesión.', 'success')
+        flash(_('msg_password_reset_success'), 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('reset_password.html')

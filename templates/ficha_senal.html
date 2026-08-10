@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Señal: #{{ senal.tag }} - Diario de Sueños{% endblock %}
+{% block title %}{{ _('signal_detail_title') }}: #{{ senal.tag }} - {{ _('app_title') }}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl w-full mx-auto p-4 md:p-6 space-y-6">
@@ -16,9 +16,9 @@
             </h1>
         </div>
         <div class="flex items-center gap-2">
-            <form action="{{ url_for('main.eliminar_senal', tag=senal.tag) }}" method="POST" onsubmit="return confirm('¿Borrar el significado de esta señal?')">
+            <form action="{{ url_for('main.eliminar_senal', tag=senal.tag) }}" method="POST" onsubmit="return confirm('{{ _('confirm_clear_signal') }}')">
                 <button type="submit" class="text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 font-semibold px-3 py-1.5 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 transition flex items-center gap-1">
-                    <i class="fa-regular fa-trash-can"></i> Limpiar Registro
+                    <i class="fa-regular fa-trash-can"></i> {{ _('btn_clear_record') }}
                 </button>
             </form>
         </div>
@@ -28,15 +28,15 @@
     <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
         <div>
             <span class="text-[10px] uppercase font-bold tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
-                Señal Onírica Recurrente
+                {{ _('recurrent_dream_signal') }}
             </span>
             <h2 class="text-2xl font-black text-slate-800 dark:text-white mt-1">#{{ senal.tag }}</h2>
         </div>
         <div class="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/50 px-4 py-2.5 rounded-xl flex items-center gap-3">
             <i class="fa-solid fa-chart-simple text-indigo-500 dark:text-indigo-400 text-xl"></i>
             <div>
-                <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Total Apariciones</p>
-                <p class="text-lg font-black text-indigo-700 dark:text-indigo-200">{{ senal.conteo }} {% if senal.conteo == 1 %}sueño{% else %}sueños{% endif %}</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{{ _('total_occurrences') }}</p>
+                <p class="text-lg font-black text-indigo-700 dark:text-indigo-200">{{ senal.conteo }} {% if senal.conteo == 1 %}{{ _('dream_singular') }}{% else %}{{ _('dream_plural') }}{% endif %}</p>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@
     <!-- BLOQUE: Formulario de interpretación / significado personal -->
     <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 shadow-sm">
         <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-pen-to-square text-indigo-500 dark:text-indigo-400"></i> Interpretación Personal
+            <i class="fa-solid fa-pen-to-square text-indigo-500 dark:text-indigo-400"></i> {{ _('personal_interpretation_title') }}
         </h3>
 
         <!-- NOTIFICACIÓN DE ÉXITO O ALERTA (FLASH) -->
@@ -63,25 +63,25 @@
             <input type="hidden" name="tag" value="{{ senal.tag }}">
 
             <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Tipo / Categoría de Señal</label>
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">{{ _('signal_category_label') }}</label>
                 <select name="categoria" class="w-full md:w-1/2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-200">
-                    <option value="Objeto" {% if senal.categoria == 'Objeto' %}selected{% endif %}>📦 Objeto</option>
-                    <option value="Persona" {% if senal.categoria == 'Persona' %}selected{% endif %}>👤 Persona / Personaje</option>
-                    <option value="Lugar" {% if senal.categoria == 'Lugar' %}selected{% endif %}>🏞️ Lugar / Escenario</option>
-                    <option value="Accion" {% if senal.categoria == 'Accion' %}selected{% endif %}>⚡ Acción / Evento</option>
-                    <option value="Emocion" {% if senal.categoria == 'Emocion' %}selected{% endif %}>🎭 Emoción / Sensación</option>
+                    <option value="Objeto" {% if senal.categoria == 'Objeto' %}selected{% endif %}>📦 {{ _('cat_object') }}</option>
+                    <option value="Persona" {% if senal.categoria == 'Persona' %}selected{% endif %}>👤 {{ _('cat_person') }}</option>
+                    <option value="Lugar" {% if senal.categoria == 'Lugar' %}selected{% endif %}>🏞️ {{ _('cat_place') }}</option>
+                    <option value="Accion" {% if senal.categoria == 'Accion' %}selected{% endif %}>⚡ {{ _('cat_action') }}</option>
+                    <option value="Emocion" {% if senal.categoria == 'Emocion' %}selected{% endif %}>🎭 {{ _('cat_emotion') }}</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">¿Qué significa esta señal para ti?</label>
-                <textarea name="significado" rows="3" placeholder="Ejemplo: Para mí ver agua limpia representa tranquilidad, pero si está turbia significa estrés por el trabajo..."
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">{{ _('signal_meaning_label') }}</label>
+                <textarea name="significado" rows="3" placeholder="{{ _('signal_meaning_placeholder') }}"
                           class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-100 resize-none focus:border-indigo-500 outline-none">{{ senal.significado }}</textarea>
             </div>
 
             <div class="flex justify-end">
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-xl transition shadow-md flex items-center gap-1.5">
-                    <i class="fa-solid fa-floppy-disk"></i> Guardar Interpretación
+                    <i class="fa-solid fa-floppy-disk"></i> {{ _('btn_save_interpretation') }}
                 </button>
             </div>
         </form>
@@ -90,19 +90,19 @@
     <!-- BLOQUE: Historial de sueños asociados a la señal -->
     <div class="space-y-3">
         <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-indigo-500 dark:text-indigo-400"></i> Historial de Sueños Asociados <span class="text-xs font-normal text-slate-400">(Haz clic en un sueño para desplegarlo)</span>
+            <i class="fa-solid fa-clock-rotate-left text-indigo-500 dark:text-indigo-400"></i> {{ _('associated_dreams_history') }} <span class="text-xs font-normal text-slate-400">({{ _('click_dream_instruction') }})</span>
         </h3>
 
         {% if suenos %}
             <div class="space-y-3">
                 {% for s in suenos %}
                 <!-- Tarjeta interactiva con evento click para abrir modal -->
-                <div onclick="verSueñoCompleto('{{ s[1]|e }}', '{{ s[2] if s[2] else 'Recuerdo Antiguo' }}', '{{ s[6] }}', `{{ s[3]|e }}`)"
+                <div onclick="verSueñoCompleto('{{ s[1]|e }}', '{{ s[2] if s[2] else _('old_memory') }}', '{{ s[6] }}', `{{ s[3]|e }}`)"
                      class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 flex flex-col justify-between text-xs hover:border-indigo-400 dark:hover:border-indigo-500/60 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer shadow-sm group">
                     <div>
                         <div class="flex justify-between items-start gap-2 mb-1">
-                            <span class="text-[10px] text-slate-400 font-semibold"><i class="fa-regular fa-calendar mr-1"></i>{{ s[2] if s[2] else 'Recuerdo Antiguo' }}</span>
-                            <span class="text-[10px] bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20 px-2 py-0.5 rounded">Calidad: {{ s[6] }}/5</span>
+                            <span class="text-[10px] text-slate-400 font-semibold"><i class="fa-regular fa-calendar mr-1"></i>{{ s[2] if s[2] else _('old_memory') }}</span>
+                            <span class="text-[10px] bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20 px-2 py-0.5 rounded">{{ _('quality_label') }}: {{ s[6] }}/5</span>
                         </div>
                         <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition">{{ s[1] }}</h4>
                         <p class="text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{{ s[3] }}</p>
@@ -111,7 +111,7 @@
                 {% endfor %}
             </div>
         {% else %}
-            <p class="text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800">No se encontraron sueños ligados a esta etiqueta.</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800">{{ _('no_associated_dreams') }}</p>
         {% endif %}
     </div>
 
@@ -132,19 +132,19 @@
         
         <div class="p-5 overflow-y-auto space-y-4 text-xs">
             <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
-                <span class="text-slate-500 dark:text-slate-400">Calidad del sueño:</span>
+                <span class="text-slate-500 dark:text-slate-400">{{ _('sleep_quality_label') }}:</span>
                 <span id="modal-calidad" class="font-bold text-indigo-600 dark:text-indigo-300"></span>
             </div>
             
             <div>
-                <h4 class="text-[10px] font-bold uppercase text-slate-400 mb-1.5">Relato Completo</h4>
+                <h4 class="text-[10px] font-bold uppercase text-slate-400 mb-1.5">{{ _('full_story_label') }}</h4>
                 <p id="modal-descripcion" class="text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed text-xs"></p>
             </div>
         </div>
 
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
             <button onclick="cerrarModalSueño()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition">
-                Cerrar
+                {{ _('btn_close') }}
             </button>
         </div>
     </div>
@@ -156,7 +156,7 @@
 <script>
     function verSueñoCompleto(titulo, fecha, calidad, descripcion) {
         document.getElementById('modal-titulo').innerText = titulo;
-        document.getElementById('modal-fecha').innerText = 'Fecha: ' + fecha;
+        document.getElementById('modal-fecha').innerText = '{{ _("modal_date_prefix") }}: ' + fecha;
         document.getElementById('modal-calidad').innerText = calidad + ' / 5 ⭐';
         document.getElementById('modal-descripcion').innerText = descripcion;
         document.getElementById('modal-sueno').classList.remove('hidden');

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Mis Logros - Entrenador Onírico{% endblock %}
+{% block title %}{{ _('achievements_page_title') }}{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-6 md:py-8">
@@ -9,14 +9,14 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-trophy text-amber-500"></i> Mis Logros y Medallas
+                <i class="fa-solid fa-trophy text-amber-500"></i> {{ _('achievements_title') }}
             </h1>
             <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Rastrea tu constancia y desbloquea insignias explorando tu subconsciente.
+                {{ _('achievements_subtitle') }}
             </p>
         </div>
         <a href="{{ url_for('main.index') }}" class="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-200 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors w-fit">
-            <i class="fa-solid fa-arrow-left text-[11px]"></i> Volver al Dashboard
+            <i class="fa-solid fa-arrow-left text-[11px]"></i> {{ _('back_to_dashboard') }}
         </a>
     </div>
 
@@ -26,9 +26,9 @@
         <!-- Racha Actual -->
         <div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
             <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Racha Actual</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ _('streak_title') }}</span>
                 <h2 class="text-2xl font-black text-amber-500 mt-1">
-                    🔥 {{ usuario.racha_actual or 0 }} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">días</span>
+                    🔥 {{ usuario.racha_actual or 0 }} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">{{ _('streak_days') }}</span>
                 </h2>
             </div>
             <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl">
@@ -39,7 +39,7 @@
         <!-- Medallas Desbloqueadas -->
         <div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
             <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Desbloqueadas</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ _('unlocked_label') }}</span>
                 <h2 class="text-2xl font-black text-indigo-500 dark:text-indigo-400 mt-1">
                     🏆 {{ total_desbloqueados }} / {{ logros|length }}
                 </h2>
@@ -52,20 +52,20 @@
         <!-- Progreso Colección -->
         <div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-col justify-between">
             <div class="flex justify-between items-center mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Progreso Colección</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ _('collection_progress_label') }}</span>
                 <span class="text-xs font-bold text-indigo-500 dark:text-indigo-400">{{ porcentaje_progreso }}%</span>
             </div>
             <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
                 <div class="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" style="width: {{ porcentaje_progreso }}%"></div>
             </div>
-            <span class="text-[10px] text-slate-400 mt-2 text-right">Completado</span>
+            <span class="text-[10px] text-slate-400 mt-2 text-right">{{ _('completed_label') }}</span>
         </div>
 
     </div>
 
     <!-- Título Galería -->
     <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-medal text-amber-500"></i> Galería de Insignias
+        <i class="fa-solid fa-medal text-amber-500"></i> {{ _('badge_gallery_title') }}
     </h2>
 
     <!-- Grid de Medallas / Insignias -->
@@ -94,13 +94,13 @@
                 </div>
             </div>
 
-            <!-- Título y Descripción -->
+            <!-- Título y Descripción Traducidos -->
             <div class="flex-1 flex flex-col justify-center">
                 <h3 class="text-sm font-bold mb-1 {% if logro.desbloqueado %}text-slate-800 dark:text-slate-100{% else %}text-slate-500 dark:text-slate-400{% endif %}">
-                    {{ logro.titulo }}
+                    {{ _(logro.key_titulo or logro.titulo) }}
                 </h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
-                    {{ logro.descripcion }}
+                    {{ _(logro.key_descripcion or logro.descripcion) }}
                 </p>
             </div>
 
@@ -108,7 +108,7 @@
             <div class="w-full pt-3 border-t border-slate-200 dark:border-slate-700/50">
                 {% if logro.desbloqueado %}
                     <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                        <i class="fa-solid fa-check text-[9px]"></i> Desbloqueado
+                        <i class="fa-solid fa-check text-[9px]"></i> {{ _('status_unlocked') }}
                     </span>
                     {% if logro.fecha %}
                         <div class="text-[10px] text-slate-400 mt-1">
@@ -117,7 +117,7 @@
                     {% endif %}
                 {% else %}
                     <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 bg-slate-200/50 dark:bg-slate-700/30 px-2 py-0.5 rounded-full">
-                        <i class="fa-solid fa-lock text-[9px]"></i> Bloqueado
+                        <i class="fa-solid fa-lock text-[9px]"></i> {{ _('status_locked') }}
                     </span>
                 {% endif %}
             </div>

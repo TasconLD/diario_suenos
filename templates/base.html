@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ g.lang_code if g and g.lang_code else 'es' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Entrenador Onírico{% endblock %}</title>
+    <title>{% block title %}{{ _('app_title') }}{% endblock %}</title>
     
     <!-- Meta etiquetas PWA -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Entrenador Onírico">
+    <meta name="apple-mobile-web-app-title" content="{{ _('app_title') }}">
     <meta name="theme-color" content="#4f46e5">
 
     <!-- Iconos para iOS y Android -->
@@ -36,16 +36,16 @@
     <div id="pwa-update-banner" class="hidden fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md z-50 bg-indigo-600 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3 backdrop-blur-md">
         <div class="flex items-center gap-3">
             <i class="fa-solid fa-arrows-rotate animate-spin text-lg"></i>
-            <span class="text-xs font-semibold">Hay una nueva versión disponible.</span>
+            <span class="text-xs font-semibold">{{ _('pwa_update_available') }}</span>
         </div>
         <button id="pwa-update-btn" class="px-3 py-1.5 bg-white text-indigo-600 font-bold text-xs rounded-xl hover:bg-slate-100 transition cursor-pointer">
-            Actualizar
+            {{ _('pwa_update_btn') }}
         </button>
     </div>
 
     <!-- BANNER DE ESTADO CONEXIÓN OFFLINE -->
     <div id="offline-status-banner" class="hidden fixed top-0 left-0 w-full bg-amber-500 text-slate-950 text-xs font-bold py-1 px-4 text-center z-50 shadow-md">
-        <i class="fa-solid fa-wifi-slash mr-2"></i> Estás en modo sin conexión (Offline)
+        <i class="fa-solid fa-wifi-slash mr-2"></i> {{ _('offline_mode_msg') }}
     </div>
 
     <!-- BLOQUE: Alertas Flash del Sistema -->

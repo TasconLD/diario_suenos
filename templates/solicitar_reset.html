@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Recuperar Contraseña - Entrenador Onírico{% endblock %}
+{% block title %}{{ _('forgot_pass_page_title') }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 md:p-8 shadow-xl">
         <div class="text-center mb-6">
             <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
-                <i class="fa-solid fa-key mr-2 text-indigo-500"></i>Recuperar Contraseña
+                <i class="fa-solid fa-key mr-2 text-indigo-500"></i>{{ _('forgot_pass_title') }}
             </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Ingresa tu correo para enviarte un enlace de restauración</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ _('forgot_pass_subtitle') }}</p>
         </div>
 
         {% if error %}
@@ -22,17 +22,17 @@
         <!-- BLOQUE: Formulario Solicitar Reset -->
         <form action="{{ url_for('auth.solicitar_reset') }}" method="POST" class="space-y-4 text-xs">
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Correo Electrónico</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_email') }}</label>
                 <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="tu@correo.com">
             </div>
 
             <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition shadow-md cursor-pointer">
-                Enviar Enlace
+                {{ _('btn_send_reset_link') }}
             </button>
         </form>
 
         <p class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
-            <a href="{{ url_for('auth.login') }}" class="text-indigo-500 font-semibold hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i>Volver al Inicio de Sesión</a>
+            <a href="{{ url_for('auth.login') }}" class="text-indigo-500 font-semibold hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i>{{ _('back_to_login') }}</a>
         </p>
     </div>
 </div>

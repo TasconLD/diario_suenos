@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from flask import Flask, Response, request, jsonify, render_template
+from flask import Flask, Response, request, jsonify, render_template, session
 from authlib.integrations.flask_client import OAuth
 
 from config import Config
@@ -15,6 +15,7 @@ from services.push_service import (
 )
 
 from services.logger import obtener_logger
+from translations import translate
 
 logger = obtener_logger("app")
 logger.info(" Servidor iniciado y logger comprobado correctamente.")
@@ -117,6 +118,15 @@ def probar_alarmas_ahora():
         })
 
     return jsonify({'status': 'ok', 'resultados': resultados})
+
+#BLOQUE: Procesador de Contexto (español ingles)
+@app.context_processor
+def inject_translate():
+    def _(key):
+        # Obtiene el idioma de la sesión activa, 'es' por defecto
+        lang = session.get('lang', 'es')
+        return translate(key, lang)
+    return dict(_=_)
 
 # BLOQUE: Arranque del servidor local
 if __name__ == '__main__':

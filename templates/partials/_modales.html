@@ -5,20 +5,20 @@
         <!-- Banner de Restauración de Borrador (Oculto por defecto) -->
         <div id="banner-borrador" class="hidden bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-amber-600 dark:text-amber-400 text-xs">
             <span class="flex items-center gap-1.5 font-medium">
-                <i class="fa-solid fa-floppy-disk"></i> Borrador no guardado detectado
+                <i class="fa-solid fa-floppy-disk"></i> {{ _('modal_draft_detected_msg') }}
             </span>
             <div class="flex items-center gap-2">
-                <button type="button" id="btn-restaurar-borrador" class="font-bold underline hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer">Restaurar</button>
+                <button type="button" id="btn-restaurar-borrador" class="font-bold underline hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer">{{ _('btn_draft_restore') }}</button>
                 <span class="opacity-40">|</span>
-                <button type="button" id="btn-descartar-borrador" class="hover:opacity-75 cursor-pointer">Descartar</button>
+                <button type="button" id="btn-descartar-borrador" class="hover:opacity-75 cursor-pointer">{{ _('btn_draft_discard') }}</button>
             </div>
         </div>
 
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
             <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">
-                <i class="fa-solid fa-feather text-indigo-500"></i> Registrar Sueño
+                <i class="fa-solid fa-feather text-indigo-500"></i> {{ _('modal_register_dream_title') }}
                 <span id="indicador-autoguardado" class="text-[10px] font-normal text-slate-400 ml-2 hidden">
-                    <i class="fa-solid fa-cloud-arrow-up text-emerald-500"></i> Guardado en borrador
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald-500"></i> {{ _('modal_draft_saved_indicator') }}
                 </span>
             </h3>
             <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
@@ -26,58 +26,58 @@
 
         <form id="form-registro-sueno" action="{{ url_for('main.registrar') }}" method="POST" class="p-4 space-y-3 text-xs">
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_title_label') }}</label>
                 <input type="text" name="titulo" id="reg-titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
             </div>
             
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_date_label') }}</label>
                     <input type="date" name="fecha" id="reg-fecha" value="{{ fecha_hoy }}" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                     <div class="flex items-center gap-1.5 mt-1.5">
                         <input type="checkbox" name="sin_fecha" id="reg-sin-fecha" onchange="toggleFecha('reg-fecha', this.checked)" class="rounded text-indigo-600 w-3.5 h-3.5 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
-                        <label for="reg-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">Sin fecha (Recuerdo)</label>
+                        <label for="reg-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">{{ _('field_no_date_label') }}</label>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hora (Opcional)</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_time_optional_label') }}</label>
                     <input type="time" name="hora" id="reg-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
             </div>
 
             <div class="grid grid-cols-3 gap-3">
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_category_label') }}</label>
                     <select name="categoria" id="reg-categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
-                        <option value="Bonito">😊 Bonito</option>
-                        <option value="Lucido">✨ Lúcido</option>
-                        <option value="Pesadilla">👹 Pesadilla</option>
-                        <option value="Falso Despertar">👁️ Falso Despertar</option>
-                        <option value="Salida Astral">🧘 Salida Astral</option>
-                        <option value="Normal">☁️ Normal</option>
+                        <option value="Bonito">{{ _('cat_opt_pleasant') }}</option>
+                        <option value="Lucido">{{ _('cat_opt_lucid') }}</option>
+                        <option value="Pesadilla">{{ _('cat_opt_nightmare') }}</option>
+                        <option value="Falso Despertar">{{ _('cat_opt_false_awakening') }}</option>
+                        <option value="Salida Astral">{{ _('cat_opt_astral') }}</option>
+                        <option value="Normal">{{ _('cat_opt_normal') }}</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Emoción</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_emotion_label') }}</label>
                     <select name="emocion" id="reg-emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
-                        <option value="">Ninguna</option>
-                        <option value="Alegria">😊 Alegría</option>
-                        <option value="Miedo">😱 Miedo</option>
-                        <option value="Tristeza">😢 Tristeza</option>
-                        <option value="Confusion">🤔 Confusión</option>
-                        <option value="Neutro">😐 Neutro</option> 
+                        <option value="">{{ _('emo_opt_none') }}</option>
+                        <option value="Alegria">{{ _('emo_opt_joy') }}</option>
+                        <option value="Miedo">{{ _('emo_opt_fear') }}</option>
+                        <option value="Tristeza">{{ _('emo_opt_sadness') }}</option>
+                        <option value="Confusion">{{ _('emo_opt_confusion') }}</option>
+                        <option value="Neutro">{{ _('emo_opt_neutral') }}</option> 
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Descanso (1 a 5)</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_rest_quality_label') }}</label>
                     <input type="number" name="calidad_sueno" id="reg-calidad" min="1" max="5" value="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
             </div>
 
             <div>
                 <div class="flex justify-between items-center mb-1">
-                    <label class="block font-bold uppercase text-slate-400 text-[10px]">Relato</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px]">{{ _('field_story_label') }}</label>
                     <!-- Widget Contador de Palabras y Caracteres -->
                     <span id="contador-texto" class="text-[10px] font-mono text-slate-400">
                         0 palabras | 0 caracteres
@@ -87,18 +87,18 @@
             </div>
 
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Etiquetas / Tags <span class="text-[9px] font-normal lowercase text-slate-400">(separadas por comas)</span></label>
-                <input type="text" name="tags" id="reg-tags" placeholder="ej. volar, agua, perro, infancia" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 placeholder:text-slate-500">
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_tags_label') }} <span class="text-[9px] font-normal lowercase text-slate-400">{{ _('field_tags_hint') }}</span></label>
+                <input type="text" name="tags" id="reg-tags" placeholder="{{ _('field_tags_placeholder') }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 placeholder:text-slate-500">
             </div>
             
             <div class="flex items-center gap-2">
                 <input type="checkbox" name="destacado" id="destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
-                <label for="destacado" class="text-slate-600 dark:text-slate-300">Marcar como destacado ⭐</label>
+                <label for="destacado" class="text-slate-600 dark:text-slate-300">{{ _('field_featured_label') }}</label>
             </div>
             
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
-                <button type="button" onclick="document.getElementById('modal-registro').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer">Guardar</button>
+                <button type="button" onclick="document.getElementById('modal-registro').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">{{ _('btn_cancel') }}</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer">{{ _('btn_save_dream') }}</button>
             </div>
         </form>
     </div>
@@ -209,76 +209,76 @@ document.addEventListener("DOMContentLoaded", () => {
 <div id="modal-edicion" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">Modificar Recuerdo</h3>
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100">{{ _('modal_edit_dream_title') }}</h3>
             <button onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="form-edicion" method="POST" class="p-4 space-y-3 text-xs">
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Título</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_title_label') }}</label>
                 <input type="text" name="titulo" id="edit-titulo" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Fecha</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_date_label') }}</label>
                     <input type="date" name="fecha" id="edit-fecha" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                     <div class="flex items-center gap-1.5 mt-1.5">
                         <input type="checkbox" name="sin_fecha" id="edit-sin-fecha" onchange="toggleFecha('edit-fecha', this.checked)" class="rounded text-indigo-600 w-3.5 h-3.5 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
-                        <label for="edit-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">Sin fecha (Recuerdo)</label>
+                        <label for="edit-sin-fecha" class="text-slate-500 dark:text-slate-400 text-[11px]">{{ _('field_no_date_label') }}</label>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hora (Opcional)</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_time_optional_label') }}</label>
                     <input type="time" name="hora" id="edit-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
             </div>
 
             <div class="grid grid-cols-3 gap-3">
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Categoría</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_category_label') }}</label>
                     <select name="categoria" id="edit-categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
-                        <option value="Bonito">😊 Bonito</option>
-                        <option value="Lucido">✨ Lúcido</option>
-                        <option value="Pesadilla">👹 Pesadilla</option>
-                        <option value="Falso Despertar">👁️ Falso Despertar</option>
-                        <option value="Salida Astral">🧘 Salida Astral</option>
-                        <option value="Normal">☁️ Normal</option>
+                        <option value="Bonito">{{ _('cat_opt_pleasant') }}</option>
+                        <option value="Lucido">{{ _('cat_opt_lucid') }}</option>
+                        <option value="Pesadilla">{{ _('cat_opt_nightmare') }}</option>
+                        <option value="Falso Despertar">{{ _('cat_opt_false_awakening') }}</option>
+                        <option value="Salida Astral">{{ _('cat_opt_astral') }}</option>
+                        <option value="Normal">{{ _('cat_opt_normal') }}</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Emoción</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_emotion_label') }}</label>
                     <select name="emocion" id="edit-emocion" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
-                        <option value="">Ninguna</option>
-                        <option value="Alegria">😊 Alegría</option>
-                        <option value="Miedo">😱 Miedo</option>
-                        <option value="Tristeza">😢 Tristeza</option>
-                        <option value="Confusion">🤔 Confusión</option>
-                        <option value="Neutro">😐 Neutro</option>
+                        <option value="">{{ _('emo_opt_none') }}</option>
+                        <option value="Alegria">{{ _('emo_opt_joy') }}</option>
+                        <option value="Miedo">{{ _('emo_opt_fear') }}</option>
+                        <option value="Tristeza">{{ _('emo_opt_sadness') }}</option>
+                        <option value="Confusion">{{ _('emo_opt_confusion') }}</option>
+                        <option value="Neutro">{{ _('emo_opt_neutral') }}</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Calidad</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_quality_label') }}</label>
                     <input type="number" name="calidad_sueno" id="edit-calidad" min="1" max="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
             </div>
 
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Etiquetas (separadas por coma)</label>
-                <input type="text" name="tags" id="edit-tags" placeholder="ej. volar, agua, perseguido" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_tags_label_edit') }}</label>
+                <input type="text" name="tags" id="edit-tags" placeholder="{{ _('field_tags_placeholder_edit') }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
             </div>
 
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Relato</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_story_label') }}</label>
                 <textarea name="descripcion" id="edit-descripcion" rows="4" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 resize-none"></textarea>
             </div>
             <div class="flex items-center gap-2">
                 <input type="checkbox" name="destacado" id="edit-destacado" class="rounded text-indigo-600 w-4 h-4 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
-                <label for="edit-destacado" class="text-slate-600 dark:text-slate-300">Mantener destacado ⭐</label>
+                <label for="edit-destacado" class="text-slate-600 dark:text-slate-300">{{ _('field_keep_featured_label') }}</label>
             </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
-                <button type="button" onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
-                <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-xl shadow-lg cursor-pointer">Actualizar</button>
+                <button type="button" onclick="document.getElementById('modal-edicion').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">{{ _('btn_cancel') }}</button>
+                <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-xl shadow-lg cursor-pointer">{{ _('btn_update') }}</button>
             </div>
         </form>
     </div>
@@ -305,11 +305,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="p-5 overflow-y-auto space-y-4 text-xs">
             <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-100 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
                 <div class="flex items-center gap-2">
-                    <span class="text-slate-500 dark:text-slate-400 font-medium">Emoción:</span>
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">{{ _('label_emotion_colon') }}</span>
                     <span id="lectura-emocion" class="font-bold text-indigo-600 dark:text-indigo-300"></span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-slate-500 dark:text-slate-400 font-medium">Calidad:</span>
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">{{ _('label_quality_colon') }}</span>
                     <span id="lectura-calidad" class="font-bold text-amber-500"></span>
                 </div>
             </div>
@@ -319,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <!-- Relato -->
             <div>
-                <h4 class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">Relato Completo</h4>
+                <h4 class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">{{ _('full_story_label') }}</h4>
                 <p id="lectura-descripcion" class="text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed text-xs md:text-sm"></p>
             </div>
         </div>
@@ -327,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <!-- Pie / Botón Cerrar -->
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
             <button onclick="cerrarModalLectura()" class="px-5 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition">
-                Cerrar
+                {{ _('btn_close') }}
             </button>
         </div>
     </div>
@@ -335,31 +335,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- BLOQUE: Modal Cambiar Contraseña y Ajustes de Cuenta -->
 <div id="modal-cambiar-pass" 
-     class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3"
+     class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 md:p-6 overflow-y-auto"
      role="dialog" 
      aria-modal="true" 
      aria-labelledby="modal-seguridad-titulo">
     
-    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" style="max-width: 600px;">
         
         <!-- Header del Modal -->
-        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+        <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0">
             <h3 id="modal-seguridad-titulo" class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-indigo-500"></i>Seguridad y Cuentas
+                <i class="fa-solid fa-shield-halved text-indigo-500"></i>{{ _('modal_security_title') }}
             </h3>
             <button type="button" 
                     onclick="cerrarModalSeguridad()" 
                     class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer transition-colors"
-                    aria-label="Cerrar modal">
+                    aria-label="{{ _('aria_close_modal') }}">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
-        <div class="p-4 space-y-4 text-xs">
+        <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto">
             
             <!-- SECCIÓN: Cuentas Vinculadas (OAuth Google) -->
             <div class="border-b border-slate-100 dark:border-slate-700/60 pb-3">
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">Cuentas Conectadas</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">{{ _('label_connected_accounts') }}</label>
                 
                 <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80">
                     <div class="flex items-center gap-2">
@@ -370,17 +370,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     {% if usuario and usuario.google_id %}
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                <i class="fa-solid fa-circle-check"></i> Conectado
+                                <i class="fa-solid fa-circle-check"></i> {{ _('status_connected') }}
                             </span>
                             <form action="{{ url_for('auth.desvincular_oauth', proveedor='google') }}" method="POST" class="m-0">
                                 <button type="submit" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors">
-                                    Desvincular
+                                    {{ _('btn_unlink') }}
                                 </button>
                             </form>
                         </div>
                     {% else %}
                         <a href="{{ url_for('auth.google_login') }}" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1">
-                            <i class="fa-solid fa-link text-[10px]"></i> Vincular
+                            <i class="fa-solid fa-link text-[10px]"></i> {{ _('btn_link') }}
                         </a>
                     {% endif %}
                 </div>
@@ -388,17 +388,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <!-- SECCIÓN: Copias de Seguridad (Backup JSON & Google Drive) -->
             <div class="border-b border-slate-100 dark:border-slate-700/60 pb-3">
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">Copia de Seguridad</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">{{ _('label_backup_section') }}</label>
                 
                 <div class="space-y-2">
                     <!-- Exportar JSON -->
                     <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-download text-indigo-500 text-sm"></i>
-                            <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs">Exportar Datos</span>
+                            <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs">{{ _('label_export_data') }}</span>
                         </div>
                         <a href="{{ url_for('main.backup_exportar') }}" class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1">
-                            Descargar JSON
+                            {{ _('btn_download_json') }}
                         </a>
                     </div>
 
@@ -406,12 +406,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     <form action="{{ url_for('main.backup_importar') }}" method="POST" enctype="multipart/form-data" class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 m-0">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-upload text-emerald-500 text-sm"></i>
-                            <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs">Restaurar Datos</span>
+                            <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs">{{ _('label_restore_data') }}</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <input type="file" name="backup_file" accept=".json" required class="hidden" id="input-backup-json" onchange="this.form.submit()">
                             <label for="input-backup-json" class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1">
-                                Cargar JSON
+                                {{ _('btn_upload_json') }}
                             </label>
                         </div>
                     </form>
@@ -426,15 +426,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         {% if usuario and usuario.google_drive_sync_activa %}
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                                    <i class="fa-solid fa-circle-check"></i> Activo
+                                    <i class="fa-solid fa-circle-check"></i> {{ _('status_active') }}
                                 </span>
                                 <a href="{{ url_for('main.drive_sincronizar') }}" class="px-2 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1">
-                                    <i class="fa-solid fa-rotate text-[10px]"></i> Sincronizar
+                                    <i class="fa-solid fa-rotate text-[10px]"></i> {{ _('btn_sync') }}
                                 </a>
                             </div>
                         {% else %}
                             <a href="{{ url_for('main.drive_conectar') }}" class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/50 rounded-lg text-[11px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1">
-                                Conectar Drive
+                                {{ _('btn_connect_drive') }}
                             </a>
                         {% endif %}
                     </div>
@@ -443,14 +443,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <!-- SECCIÓN: Formulario Cambiar Contraseña -->
             <form action="{{ url_for('auth.cambiar_contrasena') }}" method="POST" onsubmit="return validarContrasenas(event)" class="space-y-3">
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Cambiar Contraseña</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('label_change_password') }}</label>
 
                 <!-- Contraseña Actual -->
                 <div>
-                    <label for="pass-actual" class="block text-slate-600 dark:text-slate-400 text-[11px] mb-1">Contraseña Actual</label>
+                    <label for="pass-actual" class="block text-slate-600 dark:text-slate-400 text-[11px] mb-1">{{ _('field_current_password') }}</label>
                     <div class="relative">
                         <input type="password" id="pass-actual" name="contrasena_actual" autocomplete="current-password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 pr-9 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
-                        <button type="button" onclick="togglePasswordVisibility('pass-actual', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1" aria-label="Mostrar/ocultar contraseña">
+                        <button type="button" onclick="togglePasswordVisibility('pass-actual', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1" aria-label="{{ _('aria_toggle_password') }}">
                             <i class="fa-solid fa-eye text-xs"></i>
                         </button>
                     </div>
@@ -458,10 +458,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <!-- Nueva Contraseña -->
                 <div>
-                    <label for="pass-nueva" class="block text-slate-600 dark:text-slate-400 text-[11px] mb-1">Nueva Contraseña</label>
+                    <label for="pass-nueva" class="block text-slate-600 dark:text-slate-400 text-[11px] mb-1">{{ _('field_new_password') }}</label>
                     <div class="relative">
                         <input type="password" id="pass-nueva" name="contrasena_nueva" minlength="8" autocomplete="new-password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 pr-9 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
-                        <button type="button" onclick="togglePasswordVisibility('pass-nueva', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1" aria-label="Mostrar/ocultar contraseña">
+                        <button type="button" onclick="togglePasswordVisibility('pass-nueva', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1" aria-label="{{ _('aria_toggle_password') }}">
                             <i class="fa-solid fa-eye text-xs"></i>
                         </button>
                     </div>
@@ -469,22 +469,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <!-- Confirmar Nueva Contraseña -->
                 <div>
-                    <label for="pass-confirmar" class="block text-slate-600 dark:text-slate-400 text-[11px] mb-1">Confirmar Nueva Contraseña</label>
+                    <label for="pass-confirmar" class="block text-slate-600 dark:text-slate-400 text-[11px] mb-1">{{ _('field_confirm_new_password') }}</label>
                     <div class="relative">
                         <input type="password" id="pass-confirmar" name="contrasena_confirmar" minlength="8" autocomplete="new-password" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 pr-9 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
-                        <button type="button" onclick="togglePasswordVisibility('pass-confirmar', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1" aria-label="Mostrar/ocultar contraseña">
+                        <button type="button" onclick="togglePasswordVisibility('pass-confirmar', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1" aria-label="{{ _('aria_toggle_password') }}">
                             <i class="fa-solid fa-eye text-xs"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Mensaje de error (opcional para feedback visual) -->
+                <!-- Mensaje de error -->
                 <p id="msg-error-pass" class="hidden text-rose-500 text-[11px] font-medium"></p>
 
                 <!-- Botones de Acción -->
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60">
-                    <button type="button" onclick="cerrarModalSeguridad()" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-1.5 bg-indigo-600 text-white font-semibold rounded-xl shadow-md cursor-pointer hover:bg-indigo-500 transition-colors">Actualizar</button>
+                    <button type="button" onclick="cerrarModalSeguridad()" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">{{ _('btn_cancel') }}</button>
+                    <button type="submit" class="px-4 py-1.5 bg-indigo-600 text-white font-semibold rounded-xl shadow-md cursor-pointer hover:bg-indigo-500 transition-colors">{{ _('btn_update') }}</button>
                 </div>
             </form>
 
@@ -525,55 +525,55 @@ window.togglePasswordVisibility = function(inputId, btn) {
 <div id="modal-exportar-personalizado" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-3">
     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
         <div class="bg-slate-50 dark:bg-slate-900 px-5 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-book text-indigo-500"></i> Exportar Diario Personalizado</h3>
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100"><i class="fa-solid fa-book text-indigo-500"></i> {{ _('modal_export_custom_title') }}</h3>
             <button onclick="document.getElementById('modal-exportar-personalizado').classList.add('hidden')" class="text-slate-400 text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="{{ url_for('main.exportar_personalizado') }}" method="GET" class="p-4 space-y-4 text-xs">
             <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
-                Genera un PDF con diseño de libro, una página por cada sueño. Deja los filtros vacíos para incluir todo tu historial.
+                {{ _('modal_export_custom_desc') }}
             </p>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Desde</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_date_from') }}</label>
                     <input type="date" name="fecha_inicio" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
                 <div>
-                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">Hasta</label>
+                    <label class="block font-bold uppercase text-slate-400 text-[10px] mb-1">{{ _('field_date_to') }}</label>
                     <input type="date" name="fecha_fin" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100">
                 </div>
             </div>
 
             <div>
-                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">Categorías (opcional)</label>
+                <label class="block font-bold uppercase text-slate-400 text-[10px] mb-2">{{ _('field_categories_optional') }}</label>
                 <div class="grid grid-cols-2 gap-2">
                     <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
                         <input type="checkbox" name="categoria" value="Bonito" class="rounded text-indigo-600 w-3.5 h-3.5">
-                        <span class="text-slate-600 dark:text-slate-300">😊 Bonito</span>
+                        <span class="text-slate-600 dark:text-slate-300">{{ _('cat_opt_pleasant') }}</span>
                     </label>
                     <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
                         <input type="checkbox" name="categoria" value="Lucido" class="rounded text-indigo-600 w-3.5 h-3.5">
-                        <span class="text-slate-600 dark:text-slate-300">✨ Lúcido</span>
+                        <span class="text-slate-600 dark:text-slate-300">{{ _('cat_opt_lucid') }}</span>
                     </label>
                     <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
                         <input type="checkbox" name="categoria" value="Pesadilla" class="rounded text-indigo-600 w-3.5 h-3.5">
-                        <span class="text-slate-600 dark:text-slate-300">👹 Pesadilla</span>
+                        <span class="text-slate-600 dark:text-slate-300">{{ _('cat_opt_nightmare') }}</span>
                     </label>
                     <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer">
                         <input type="checkbox" name="categoria" value="Falso Despertar" class="rounded text-indigo-600 w-3.5 h-3.5">
-                        <span class="text-slate-600 dark:text-slate-300">👁️ Falso Despertar</span>
+                        <span class="text-slate-600 dark:text-slate-300">{{ _('cat_opt_false_awakening') }}</span>
                     </label>
                     <label class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer col-span-2">
                         <input type="checkbox" name="categoria" value="Salida Astral" class="rounded text-indigo-600 w-3.5 h-3.5">
-                        <span class="text-slate-600 dark:text-slate-300">🧘 Salida Astral</span>
+                        <span class="text-slate-600 dark:text-slate-300">{{ _('cat_opt_astral') }}</span>
                     </label>
                 </div>
             </div>
 
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700/60">
-                <button type="button" onclick="document.getElementById('modal-exportar-personalizado').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">Cancelar</button>
+                <button type="button" onclick="document.getElementById('modal-exportar-personalizado').classList.add('hidden')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl cursor-pointer">{{ _('btn_cancel') }}</button>
                 <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer flex items-center gap-1.5">
-                    <i class="fa-solid fa-download"></i> Generar PDF
+                    <i class="fa-solid fa-download"></i> {{ _('btn_generate_pdf') }}
                 </button>
             </div>
         </form>

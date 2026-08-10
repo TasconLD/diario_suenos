@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Entrenador Onírico - Mi Diario{% endblock %}
+{% block title %}{{ _('nav_brand') }} - {{ _('filter_memories') }}{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-4 md:py-8">
@@ -17,9 +17,9 @@
                 </div>
                 <div>
                     <div class="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
-                        {{ usuario.racha_actual if usuario and usuario.racha_actual is defined else 0 }} días
+                        {{ usuario.racha_actual if usuario and usuario.racha_actual is defined else 0 }} {{ _('streak_days') }}
                     </div>
-                    <span class="text-xs text-slate-500 dark:text-slate-400">Racha actual</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">{{ _('streak_title') }}</span>
                 </div>
             </div>
 
@@ -36,14 +36,14 @@
                         {% set total_logros = logros | length if logros else 0 %}
                         {{ desbloqueados }} / {{ total_logros }}
                     </div>
-                    <span class="text-xs text-slate-500 dark:text-slate-400">Medallas</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">{{ _('badges_title') }}</span>
                 </div>
             </div>
         </div>
 
         <!-- Enlace a la sección completa de logros -->
         <a href="{{ url_for('main.logros') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800/50">
-            <span>Ver mis logros</span>
+            <span>{{ _('btn_view_achievements') }}</span>
             <i class="fa-solid fa-arrow-right text-[10px]"></i>
         </a>
     </div>
@@ -205,7 +205,13 @@
             window.instDona = new Chart(canvasDona, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Bonitos', 'Lúcidos', 'Pesadillas', 'Falso Despertar', 'Salida Astral'],
+                    labels: [
+                        "{{ _('filter_pleasant') }}", 
+                        "{{ _('filter_lucid') }}", 
+                        "{{ _('filter_nightmares') }}", 
+                        "{{ _('filter_false_awakening') }}", 
+                        "{{ _('filter_astral') }}"
+                    ],
                     datasets: [{
                         data: [bonitos, lucidos, pesadillas, falsosDespertar, salidasAstrales],
                         backgroundColor: ['#4ade80', '#fbbf24', '#f87171', '#6366f1', '#a855f7'],
@@ -241,7 +247,7 @@
                 data: {
                     labels: etiquetasMeses.length > 0 ? etiquetasMeses : ['Sin datos'],
                     datasets: [{
-                        label: 'Sueños Registrados',
+                        label: '{{ _("filter_memories") }}',
                         data: datosMeses.length > 0 ? datosMeses : [0],
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.12)',

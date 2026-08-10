@@ -197,21 +197,29 @@ def importar_backup_usuario(usuario_id, data_backup):
 # BLOQUE: Gamificación, Rachas y Sistema de Medallas
 LOGROS_CATALOGO = {
     'PRIMER_SUENO': {
+        'key_titulo': 'badge_first_dream_title',
+        'key_descripcion': 'badge_first_dream_desc',
         'titulo': 'Primer Destello',
         'descripcion': 'Registraste tu primer sueño en la bitácora.',
         'icono': 'fa-feather'
     },
     'PRIMER_LUCIDO': {
+        'key_titulo': 'badge_first_lucid_title',
+        'key_descripcion': 'badge_first_lucid_desc',
         'titulo': 'Despertar Consciente',
         'descripcion': 'Registraste tu primer sueño lúcido.',
         'icono': 'fa-lightbulb'
     },
     'RACHA_7': {
+        'key_titulo': 'badge_streak_7_title',
+        'key_descripcion': 'badge_streak_7_desc',
         'titulo': 'Hábito Onírico',
         'descripcion': 'Mantuviste una racha de registro de 7 días consecutivos.',
         'icono': 'fa-fire'
     },
     'SENALES_10': {
+        'key_titulo': 'badge_signals_10_title',
+        'key_descripcion': 'badge_signals_10_desc',
         'titulo': 'Cartógrafo del Subconsciente',
         'descripcion': 'Descubriste 10 señales o patrones oníricos.',
         'icono': 'fa-compass'
@@ -302,7 +310,7 @@ def verificar_y_otorgar_logros(usuario_id):
     return logros_desbloqueados_nuevos
 
 def obtener_estado_logros_usuario(usuario_id):
-    """Retorna la lista completa de logros con su estado (desbloqueado o bloqueado)."""
+    """Retorna la lista completa de logros con su estado (desbloqueado o bloqueado) e información i18n."""
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
@@ -317,6 +325,8 @@ def obtener_estado_logros_usuario(usuario_id):
         esta_desbloqueado = codigo in desbloqueados_map
         lista_logros.append({
             'codigo': codigo,
+            'key_titulo': info['key_titulo'],
+            'key_descripcion': info['key_descripcion'],
             'titulo': info['titulo'],
             'descripcion': info['descripcion'],
             'icono': info['icono'],

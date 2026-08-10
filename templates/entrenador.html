@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Entrenador Onírico - Guías y Consejos{% endblock %}
+{% block title %}{{ _('coach_page_title') }}{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
@@ -10,15 +10,15 @@
         <div class="flex items-center gap-3">
             <a href="{{ url_for('main.index') }}" 
                class="p-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition border border-slate-200 dark:border-slate-700 shadow-sm"
-               title="Volver al Menú Principal">
+               title="{{ _('back_to_menu') }}">
                 <i class="fa-solid fa-arrow-left text-base"></i>
             </a>
             <div>
                 <h1 class="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-graduation-cap text-indigo-500"></i> Entrenador Onírico
+                    <i class="fa-solid fa-graduation-cap text-indigo-500"></i> {{ _('nav_coach') }}
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Aprende las mejores técnicas de lucidez y prepara tu mente antes de dormir.
+                    {{ _('coach_subtitle') }}
                 </p>
             </div>
         </div>
@@ -31,7 +31,7 @@
                 <i class="fa-solid fa-lightbulb"></i>
             </div>
             <div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Recomendación Diaria</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{{ _('daily_recommendation_label') }}</span>
                 <p class="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 mt-0.5 leading-relaxed">
                     "{{ consejo }}"
                 </p>
@@ -42,7 +42,7 @@
     <!-- SECCIÓN: GUÍAS DE TÉCNICAS ONÍRICAS -->
     <div class="space-y-4">
         <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-book-open text-indigo-500"></i> Guías de Técnicas de Lucidez
+            <i class="fa-solid fa-book-open text-indigo-500"></i> {{ _('lucidity_guides_title') }}
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -65,7 +65,7 @@
 
                     <!-- Paso a Paso simplificado -->
                     <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-700/40 text-[11px] space-y-2">
-                        <strong class="block text-[10px] uppercase font-bold text-slate-400">Pasos clave:</strong>
+                        <strong class="block text-[10px] uppercase font-bold text-slate-400">{{ _('key_steps_label') }}</strong>
                         <ol class="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-300">
                             {% for paso in tec.pasos %}
                                 <li>{{ paso }}</li>
@@ -81,9 +81,9 @@
     <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 shadow-sm space-y-4">
         <div class="flex justify-between items-center">
             <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-moon text-indigo-500"></i> Checklist de Higiene del Sueño
+                <i class="fa-solid fa-moon text-indigo-500"></i> {{ _('sleep_hygiene_title') }}
             </h2>
-            <span class="text-[10px] text-slate-400 font-semibold uppercase">Lista de hábitos antes de acostarte</span>
+            <span class="text-[10px] text-slate-400 font-semibold uppercase">{{ _('pre_bedtime_habits_subtitle') }}</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

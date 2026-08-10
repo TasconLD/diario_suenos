@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Recordatorios y Reality Checks{% endblock %}
+{% block title %}{{ _('reminders_page_title') }}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -12,21 +12,22 @@
         </a>
         <div>
             <h1 class="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-2">
-                <i class="fa-solid fa-bell text-indigo-500"></i> Recordatorios y Reality Checks
+                <i class="fa-solid fa-bell text-indigo-500"></i> {{ _('reminders_header_title') }}
             </h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Configura tus alarmas de inducción a sueños lúcidos y recordatorios de registro offline.
+                {{ _('reminders_header_subtitle') }}
             </p>
         </div>
     </div>
+
     <!-- Estado de Permisos -->
     <div id="permiso-banner" class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center justify-between gap-4">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-triangle-exclamation text-base"></i>
-            <span>Para recibir notificaciones, debes conceder permisos en tu navegador.</span>
+            <span>{{ _('perm_grant_warning') }}</span>
         </div>
         <button id="btn-solicitar-permiso" class="px-3 py-1.5 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors shadow-sm">
-            Activar Notificaciones
+            {{ _('btn_enable_notifs') }}
         </button>
     </div>
 
@@ -40,14 +41,14 @@
                         <i class="fa-solid fa-sun"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">Diario Matutino</h3>
-                        <p class="text-[11px] text-slate-500">Registrar sueño al despertar</p>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">{{ _('card_morning_title') }}</h3>
+                        <p class="text-[11px] text-slate-500">{{ _('card_morning_subtitle') }}</p>
                     </div>
                 </div>
                 <input type="checkbox" id="check-matutino" class="w-5 h-5 accent-indigo-600 rounded cursor-pointer">
             </div>
             <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                <label class="text-xs text-slate-600 dark:text-slate-400 font-medium">Hora de alarma:</label>
+                <label class="text-xs text-slate-600 dark:text-slate-400 font-medium">{{ _('label_alarm_time') }}</label>
                 <input type="time" id="hora-matutino" value="07:00" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-800 dark:text-white">
             </div>
         </div>
@@ -60,14 +61,14 @@
                         <i class="fa-solid fa-moon"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">Repaso Nocturno</h3>
-                        <p class="text-[11px] text-slate-500">Repasar objetivos antes de dormir</p>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">{{ _('card_night_title') }}</h3>
+                        <p class="text-[11px] text-slate-500">{{ _('card_night_subtitle') }}</p>
                     </div>
                 </div>
                 <input type="checkbox" id="check-nocturno" class="w-5 h-5 accent-indigo-600 rounded cursor-pointer">
             </div>
             <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                <label class="text-xs text-slate-600 dark:text-slate-400 font-medium">Hora de alarma:</label>
+                <label class="text-xs text-slate-600 dark:text-slate-400 font-medium">{{ _('label_alarm_time') }}</label>
                 <input type="time" id="hora-nocturno" value="22:30" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-800 dark:text-white">
             </div>
         </div>
@@ -80,8 +81,8 @@
                         <i class="fa-solid fa-eye"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">Reality Checks (Comprobación de Realidad)</h3>
-                        <p class="text-[11px] text-slate-500">Notificaciones periódicas: "¿Estás soñando ahora mismo?"</p>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">{{ _('card_rc_title') }}</h3>
+                        <p class="text-[11px] text-slate-500">{{ _('card_rc_subtitle') }}</p>
                     </div>
                 </div>
                 <input type="checkbox" id="check-rc" class="w-5 h-5 accent-indigo-600 rounded cursor-pointer">
@@ -89,18 +90,18 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 dark:border-slate-700">
                 <div>
-                    <label class="text-xs text-slate-600 dark:text-slate-400 font-medium block mb-1">Frecuencia:</label>
+                    <label class="text-xs text-slate-600 dark:text-slate-400 font-medium block mb-1">{{ _('label_frequency') }}</label>
                     <select id="frecuencia-rc" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-white">
-                        <option value="60">Cada 1 hora</option>
-                        <option value="120" selected>Cada 2 horas</option>
-                        <option value="180">Cada 3 horas</option>
-                        <option value="240">Cada 4 horas</option>
+                        <option value="60">{{ _('opt_every_1h') }}</option>
+                        <option value="120" selected>{{ _('opt_every_2h') }}</option>
+                        <option value="180">{{ _('opt_every_3h') }}</option>
+                        <option value="240">{{ _('opt_every_4h') }}</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs text-slate-600 dark:text-slate-400 font-medium block mb-1">Modo de prueba:</label>
+                    <label class="text-xs text-slate-600 dark:text-slate-400 font-medium block mb-1">{{ _('label_test_mode') }}</label>
                     <button id="btn-test-rc" class="w-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-paper-plane"></i> Probar Notificación Ahora
+                        <i class="fa-solid fa-paper-plane"></i> {{ _('btn_test_notif_now') }}
                     </button>
                 </div>
             </div>
@@ -110,8 +111,15 @@
 </div>
 
 <script>
-// Clave VAPID Pública nueva y limpia (coincide exactamente con app.py)
 const PUBLIC_VAPID_KEY = 'BOhdHbRniwliKrGfNXASKf1cz4pifHUbmu1r1emJvDQkTR-Sy0B-s0oko6VxIr4kyebdSZioJtJxX1UW4M2PYOM';
+
+const JS_I18N = {
+    syncSuccess: "{{ _('msg_sync_success') }}",
+    syncError: "{{ _('msg_sync_error') }}",
+    notifBlocked: "{{ _('msg_notif_blocked') }}",
+    notifPrompt: "{{ _('msg_notif_prompt') }}",
+    btnEnable: "{{ _('btn_enable_notifs') }}"
+};
 
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -130,7 +138,7 @@ function urlBase64ToUint8Array(base64String) {
 
 async function sincronizarPushConServidor() {
     if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') {
-        console.warn("⚠️ Notificaciones no permitidas o SW no soportado.");
+        console.warn("Notificaciones no permitidas o SW no soportado.");
         return;
     }
 
@@ -138,12 +146,10 @@ async function sincronizarPushConServidor() {
         const reg = await navigator.serviceWorker.ready;
         let subscription = await reg.pushManager.getSubscription();
 
-        // 🧹 PASO CLAVE: Si ya existía una suscripción (corrupta o con clave anterior), se resetea primero
         if (subscription) {
             await subscription.unsubscribe();
         }
 
-        // Crear la nueva suscripción limpia con la VAPID Key actual
         const convertedKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
         subscription = await reg.pushManager.subscribe({
             userVisibleOnly: true,
@@ -166,11 +172,11 @@ async function sincronizarPushConServidor() {
         });
 
         const resData = await response.json();
-        console.log("✅ Respuesta del servidor:", resData);
-        alert(" Dispositivo sincronizado correctamente con el servidor de notificaciones.");
+        console.log("Respuesta del servidor:", resData);
+        alert(JS_I18N.syncSuccess);
     } catch (err) {
-        console.error("❌ Error sincronizando suscripción:", err);
-        alert("Error al sincronizar con el servidor: " + err.message);
+        console.error("Error sincronizando suscripción:", err);
+        alert(JS_I18N.syncError + err.message);
     }
 }
 
@@ -192,16 +198,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             sincronizarPushConServidor();
         } else if (Notification.permission === 'denied') {
             banner.className = "p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2";
-            banner.innerHTML = "<i class='fa-solid fa-lock text-base'></i> <span>Notificaciones bloqueadas en tu navegador. Actívalas en la configuración del sitio.</span>";
+            banner.innerHTML = `<i class='fa-solid fa-lock text-base'></i> <span>${JS_I18N.notifBlocked}</span>`;
         } else {
             banner.className = "p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs flex items-center justify-between gap-4";
             banner.innerHTML = `
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-bell text-base"></i>
-                    <span>Permite las notificaciones para activar alertas.</span>
+                    <span>${JS_I18N.notifPrompt}</span>
                 </div>
                 <button id="btn-solicitar-permiso" class="px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">
-                    Activar Notificaciones
+                    ${JS_I18N.btnEnable}
                 </button>
             `;
 
