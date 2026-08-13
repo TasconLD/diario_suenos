@@ -79,9 +79,9 @@
             <i class="fa-solid fa-download"></i> {{ _('nav_install') }}
         </button>
 
-        <!-- BOTÓN REGISTRAR SUEÑO -->
-        <button onclick="document.getElementById('modal-registro').classList.remove('hidden')" 
-                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md cursor-pointer">
+        <!-- BOTÓN REGISTRAR SUEÑO CORREGIDO -->
+        <button onclick="const m = document.getElementById('modal-registro'); if(m) { m.classList.remove('hidden'); } else { console.error('El modal-registro no existe en esta vista'); }" 
+            class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-xl transition duration-150 flex items-center gap-1.5 shadow-md cursor-pointer">
             <i class="fa-solid fa-plus text-[10px]"></i> {{ _('nav_new_dream') }}
         </button>
 
