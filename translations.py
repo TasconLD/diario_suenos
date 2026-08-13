@@ -475,6 +475,18 @@ TRANSLATIONS = {
         'higiene_oscuridad': 'Habitación fresca, oscura y silenciosa',
         'higiene_cafeina': 'Cero cafeína 6 horas antes de dormir',
         'higiene_meditacion': '5 minutos de respiración profunda en la cama',
+        
+        # ================================================
+        # BLOQUE NUEVO: Logros y Medallas (models.py - LOGROS_CATALOGO)
+        # ================================================
+        'badge_first_dream_title': 'Primer Destello',
+        'badge_first_dream_desc': 'Registraste tu primer sueño en la bitácora.',
+        'badge_first_lucid_title': 'Despertar Consciente',
+        'badge_first_lucid_desc': 'Registraste tu primer sueño lúcido.',
+        'badge_streak_7_title': 'Hábito Onírico',
+        'badge_streak_7_desc': 'Mantuviste una racha de registro de 7 días consecutivos.',
+        'badge_signals_10_title': 'Cartógrafo del Subconsciente',
+        'badge_signals_10_desc': 'Descubriste 10 señales o patrones oníricos.',
     },
 
     'en': {
@@ -953,6 +965,18 @@ TRANSLATIONS = {
         'higiene_oscuridad': 'Cool, dark, and quiet room',
         'higiene_cafeina': 'Zero caffeine 6 hours before bed',
         'higiene_meditacion': '5 minutes of deep breathing in bed',
+        
+                # ================================================
+        # NEW BLOCK: Achievements & Badges (models.py - LOGROS_CATALOGO)
+        # ================================================
+        'badge_first_dream_title': 'First Spark',
+        'badge_first_dream_desc': 'You logged your first dream in the journal.',
+        'badge_first_lucid_title': 'Conscious Awakening',
+        'badge_first_lucid_desc': 'You logged your first lucid dream.',
+        'badge_streak_7_title': 'Dream Habit',
+        'badge_streak_7_desc': 'You kept a 7-day logging streak.',
+        'badge_signals_10_title': 'Subconscious Cartographer',
+        'badge_signals_10_desc': 'You discovered 10 dream signals or patterns.',
     }
 }
 
