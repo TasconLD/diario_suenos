@@ -12,7 +12,7 @@ def obtener_estadisticas(usuario_id):
                 SELECT 
                     COUNT(*) as total,
                     COALESCE(COUNT(*) FILTER (WHERE 'pesadilla' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as pesadillas,
-                    COALESCE(COUNT(*) FILTER (WHERE 'lucido' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as lucidos,
+                    COALESCE(COUNT(*) FILTER (WHERE lucido = TRUE OR 'lucido' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as lucidos,
                     COALESCE(COUNT(*) FILTER (WHERE 'bonito' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as bonitos,
                     COALESCE(COUNT(*) FILTER (WHERE 'falso despertar' = ANY(SELECT LOWER(c) FROM unnest(categorias) c) OR 'falsodespertar' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as falsos_despertares,
                     COALESCE(COUNT(*) FILTER (WHERE 'salida astral' = ANY(SELECT LOWER(c) FROM unnest(categorias) c) OR 'salidaastral' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)), 0) as salidas_astrales,
@@ -83,8 +83,13 @@ def cargar_datos_filtrados(usuario_id, fecha_inicio=None, fecha_fin=None, catego
 
 # BLOQUE: Exportación completa de base de datos a Diccionario JSON
 def obtener_backup_completo_usuario(usuario_id):
+    """
+    Obtiene todos los datos asociados a un usuario (sueños, señales y objetivos)
+    utilizando los nombres exactos de las tablas: suenos, senales_oniricas, objetivos_oniricos.
+    """
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # 1. Sueños
             cursor.execute("SELECT * FROM suenos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
             suenos = cursor.fetchall() or []
             for s in suenos:
@@ -93,24 +98,16 @@ def obtener_backup_completo_usuario(usuario_id):
                 if s.get('hora'):
                     s['hora'] = s['hora'].strftime('%H:%M:%S')
 
-            # Manejo seguro por si la tabla senales aún no existe
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'senales');")
-            if cursor.fetchone()['exists']:
-                cursor.execute("SELECT * FROM senales WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
-                senales = cursor.fetchall() or []
-            else:
-                senales = []
+            # 2. Señales Oníricas
+            cursor.execute("SELECT * FROM senales_oniricas WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            senales = cursor.fetchall() or []
 
-            # Manejo seguro por si la tabla objetivos aún no existe
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'objetivos');")
-            if cursor.fetchone()['exists']:
-                cursor.execute("SELECT * FROM objetivos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
-                objetivos = cursor.fetchall() or []
-                for o in objetivos:
-                    if o.get('fecha_creacion'):
-                        o['fecha_creacion'] = o['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
-            else:
-                objetivos = []
+            # 3. Objetivos Oníricos
+            cursor.execute("SELECT * FROM objetivos_oniricos WHERE usuario_id = %s ORDER BY id ASC;", (usuario_id,))
+            objetivos = cursor.fetchall() or []
+            for o in objetivos:
+                if o.get('fecha_creacion'):
+                    o['fecha_creacion'] = o['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
 
             return {
                 "suenos": suenos,
@@ -120,6 +117,10 @@ def obtener_backup_completo_usuario(usuario_id):
 
 # BLOQUE: Importación e inserción de Backup JSON
 def importar_backup_usuario(usuario_id, data_backup):
+    """
+    Recibe un diccionario con sueños, señales y objetivos, e inserta
+    los registros en la base de datos vinculados al usuario especificado.
+    """
     suenos = data_backup.get('suenos', [])
     senales = data_backup.get('senales', [])
     objetivos = data_backup.get('objetivos', [])
@@ -128,19 +129,21 @@ def importar_backup_usuario(usuario_id, data_backup):
 
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # Insertar Sueños
             for s in suenos:
                 cursor.execute("""
                     INSERT INTO suenos (
                         usuario_id, titulo, descripcion, fecha, hora, 
-                        destacado, emocion, categorias, tags, calidad_sueno
+                        lucido, destacado, emocion, categorias, tags, calidad_sueno
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     usuario_id,
                     s.get('titulo', 'Sin Título'),
                     s.get('descripcion', ''),
                     s.get('fecha'),
                     s.get('hora') if s.get('hora') != '' else None,
+                    s.get('lucido', False),
                     s.get('destacado', False),
                     s.get('emocion'),
                     s.get('categorias'),
@@ -149,32 +152,31 @@ def importar_backup_usuario(usuario_id, data_backup):
                 ))
                 total_insertados += 1
 
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'senales');")
-            if cursor.fetchone()['exists']:
-                for sen in senales:
-                    cursor.execute("""
-                        INSERT INTO senales (usuario_id, nombre, categoria, significado)
-                        VALUES (%s, %s, %s, %s)
-                        ON CONFLICT DO NOTHING;
-                    """, (
-                        usuario_id,
-                        sen.get('nombre'),
-                        sen.get('categoria'),
-                        sen.get('significado')
-                    ))
+            # Insertar Señales Oníricas
+            for sen in senales:
+                cursor.execute("""
+                    INSERT INTO senales_oniricas (usuario_id, tag, categoria, significado)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING;
+                """, (
+                    usuario_id,
+                    sen.get('tag') or sen.get('nombre'),
+                    sen.get('categoria'),
+                    sen.get('significado')
+                ))
 
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'objetivos');")
-            if cursor.fetchone()['exists']:
-                for obj in objetivos:
-                    cursor.execute("""
-                        INSERT INTO objetivos (usuario_id, titulo, descripcion, completado)
-                        VALUES (%s, %s, %s, %s);
-                    """, (
-                        usuario_id,
-                        obj.get('titulo'),
-                        obj.get('descripcion'),
-                        obj.get('completado', False)
-                    ))
+            # Insertar Objetivos Oníricos
+            for obj in objetivos:
+                cursor.execute("""
+                    INSERT INTO objetivos_oniricos (usuario_id, titulo, descripcion, prioridad, categoria)
+                    VALUES (%s, %s, %s, %s, %s);
+                """, (
+                    usuario_id,
+                    obj.get('titulo'),
+                    obj.get('descripcion'),
+                    obj.get('prioridad', 'media'),
+                    obj.get('categoria', 'general')
+                ))
 
             conn.commit()
 
@@ -213,6 +215,7 @@ LOGROS_CATALOGO = {
 }
 
 def actualizar_racha_usuario(usuario_id):
+    """Calcula y actualiza la racha de días consecutivos registrando sueños."""
     hoy = datetime.now().date()
     ayer = hoy - timedelta(days=1)
 
@@ -247,26 +250,21 @@ def actualizar_racha_usuario(usuario_id):
             return nueva_racha
 
 def verificar_y_otorgar_logros(usuario_id):
+    """Evalúa las métricas del usuario y desbloquea nuevos logros si cumple las condiciones."""
     logros_desbloqueados_nuevos = []
 
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            # Validar si existe la tabla logros_usuario
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'logros_usuario');")
-            if not cursor.fetchone()['exists']:
-                return []
-
             cursor.execute("SELECT codigo_logro FROM logros_usuario WHERE usuario_id = %s", (usuario_id,))
             existentes = set(row['codigo_logro'] for row in cursor.fetchall())
 
             cursor.execute("SELECT COUNT(*) as total FROM suenos WHERE usuario_id = %s", (usuario_id,))
             total_suenos = cursor.fetchone()['total']
 
-            # Ajustado para no requerir la columna 'lucido'
             cursor.execute("""
                 SELECT COUNT(*) as total FROM suenos 
                 WHERE usuario_id = %s AND (
-                    'lucido' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)
+                    lucido = TRUE OR 'lucido' = ANY(SELECT LOWER(c) FROM unnest(categorias) c)
                 )
             """, (usuario_id,))
             total_lucidos = cursor.fetchone()['total']
@@ -275,14 +273,10 @@ def verificar_y_otorgar_logros(usuario_id):
             racha_res = cursor.fetchone()
             racha_actual = racha_res['racha_actual'] if racha_res and racha_res.get('racha_actual') else 0
 
-            # Validación de la tabla senales antes de contar
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'senales');")
-            if cursor.fetchone()['exists']:
-                cursor.execute("SELECT COUNT(*) as total FROM senales WHERE usuario_id = %s", (usuario_id,))
-                total_senales_res = cursor.fetchone()
-                total_senales = total_senales_res['total'] if total_senales_res else 0
-            else:
-                total_senales = 0
+            # Consulta dirigida a senales_oniricas
+            cursor.execute("SELECT COUNT(*) as total FROM senales_oniricas WHERE usuario_id = %s", (usuario_id,))
+            total_senales_res = cursor.fetchone()
+            total_senales = total_senales_res['total'] if total_senales_res else 0
 
             evaluaciones = [
                 ('PRIMER_SUENO', total_suenos >= 1),
@@ -305,18 +299,15 @@ def verificar_y_otorgar_logros(usuario_id):
     return logros_desbloqueados_nuevos
 
 def obtener_estado_logros_usuario(usuario_id):
+    """Retorna la lista completa de logros con su estado (desbloqueado o bloqueado) e información i18n."""
     with obtener_conexion() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'logros_usuario');")
-            if not cursor.fetchone()['exists']:
-                desbloqueados_map = {}
-            else:
-                cursor.execute("""
-                    SELECT codigo_logro, fecha_desbloqueo 
-                    FROM logros_usuario 
-                    WHERE usuario_id = %s
-                """, (usuario_id,))
-                desbloqueados_map = {row['codigo_logro']: row['fecha_desbloqueo'] for row in cursor.fetchall()}
+            cursor.execute("""
+                SELECT codigo_logro, fecha_desbloqueo 
+                FROM logros_usuario 
+                WHERE usuario_id = %s
+            """, (usuario_id,))
+            desbloqueados_map = {row['codigo_logro']: row['fecha_desbloqueo'] for row in cursor.fetchall()}
 
     lista_logros = []
     for codigo, info in LOGROS_CATALOGO.items():
