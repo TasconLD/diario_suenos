@@ -3,6 +3,7 @@ import re
 from collections import Counter
 import time
 from datetime import datetime, date, time as datetime_time
+from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash, jsonify
 from psycopg2.extras import RealDictCursor
 from database import obtener_conexion
@@ -234,9 +235,10 @@ def registrar():
         fecha = None
         
     hora = request.form.get('hora')
-    # Si no ingresó hora manualmente, asignamos automáticamente la hora actual del servidor
+    # Si no ingresó hora manualmente, asignamos automáticamente la hora actual
+    # usando la zona horaria real de Colombia (evita el desfase de Render/UTC)
     if not hora or hora.strip() == '':
-        hora = datetime.now().time().strftime('%H:%M:%S')
+        hora = datetime.now(ZoneInfo("America/Bogota")).time().strftime('%H:%M:%S')
 
     descripcion = request.form.get('descripcion')
     
