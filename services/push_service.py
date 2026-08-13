@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo 
 from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
 from config import Config
@@ -42,7 +43,7 @@ def enviar_push(subscription_info, titulo, mensaje, tag="general"):
 
 def iniciar_scheduler(subscriptions_file):
     def verificar_recordatorios():
-        ahora = datetime.now()
+        ahora = datetime.now(ZoneInfo("America/Bogota"))
         hora_actual = ahora.strftime("%H:%M")
         minutos_del_dia = ahora.hour * 60 + ahora.minute
 
