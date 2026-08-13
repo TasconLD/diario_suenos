@@ -84,4 +84,10 @@ def inicializar_base_datos():
                 );
             """)
 
+            # BLOQUE: Migración de esquema - Columna de idioma preferido del usuario
+            cursor.execute("""
+                ALTER TABLE usuarios 
+                ADD COLUMN IF NOT EXISTS idioma VARCHAR(5) DEFAULT 'es';
+            """)
+
             conn.commit()
