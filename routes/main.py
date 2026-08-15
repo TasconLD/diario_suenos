@@ -22,9 +22,14 @@ from models import (
     obtener_estadisticas,
     actualizar_racha_usuario,
     verificar_y_otorgar_logros,
-    obtener_estado_logros_usuario
+    obtener_estado_logros_usuario,
+    crear_registro_vigilia,
+    obtener_registros_vigilia_usuario,
+    eliminar_registro_vigilia
 )
 from translations import translate
+
+
 
 # BLOQUE: Inicialización del Blueprint principal
 main_bp = Blueprint('main', __name__)
@@ -1404,3 +1409,68 @@ def cambiar_idioma(lang):
     # Redirigir a la página donde estaba el usuario (o al home por defecto)
     referrer = request.referrer or url_for('main.index')
     return redirect(referrer)
+
+# BLOQUE: Bitácora de Vigilia - Gestión de registros de la vida real
+@main_bp.route('/vigilia')
+def vista_vigilia():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+        
+    usuario_id = session['usuario_id']
+    fecha_hoy = date.today().strftime('%Y-%m-%d')
+    registros = obtener_registros_vigilia_usuario(usuario_id)
+    
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT id, usuario, email, racha_actual FROM usuarios WHERE id = %s;", (usuario_id,))
+            usuario_actual = cursor.fetchone()
+
+    return render_template(
+        'vigilia.html',
+        registros=registros,
+        usuario=usuario_actual,
+        usuario_nombre=session.get('usuario_nombre', 'Usuario'),
+        fecha_hoy=fecha_hoy
+    )
+
+@main_bp.route('/vigilia/nuevo', methods=['POST'])
+def guardar_vigilia():
+    if 'usuario_id' not in session:
+        return jsonify({'success': False, 'error': 'Usuario no autenticado'}), 401
+
+    usuario_id = session['usuario_id']
+    titulo = request.form.get('titulo', '').strip()
+    descripcion = request.form.get('descripcion', '').strip()
+    fecha = request.form.get('fecha') or date.today().strftime('%Y-%m-%d')
+    estado_animo = request.form.get('estado_animo') or None
+    personas_clave = request.form.get('personas_clave', '').strip() or None
+    eventos_clave = request.form.get('eventos_clave', '').strip() or None
+
+    if not titulo or not descripcion:
+        return jsonify({'success': False, 'error': 'El título y la descripción son obligatorios.'}), 400
+
+    try:
+        nuevo_id = crear_registro_vigilia(
+            usuario_id=usuario_id,
+            fecha=fecha,
+            titulo=titulo,
+            descripcion=descripcion,
+            estado_animo=estado_animo,
+            personas_clave=personas_clave,
+            eventos_clave=eventos_clave
+        )
+        return jsonify({'success': True, 'id': nuevo_id, 'message': 'Registro guardado con éxito.'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@main_bp.route('/vigilia/eliminar/<int:registro_id>', methods=['DELETE', 'POST'])
+def eliminar_vigilia(registro_id):
+    if 'usuario_id' not in session:
+        return jsonify({'success': False, 'error': 'Usuario no autenticado'}), 401
+
+    usuario_id = session['usuario_id']
+    try:
+        eliminar_registro_vigilia(registro_id, usuario_id)
+        return jsonify({'success': True, 'message': 'Registro eliminado correctamente.'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

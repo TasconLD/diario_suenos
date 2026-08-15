@@ -324,3 +324,45 @@ def obtener_estado_logros_usuario(usuario_id):
         })
 
     return lista_logros
+
+
+# BLOQUE: Gestión de Bitácora de Vigilia (Vida Real)
+
+def crear_registro_vigilia(usuario_id, fecha, titulo, descripcion, estado_animo=None, personas_clave=None, eventos_clave=None):
+    """Crea un nuevo registro de la vida real (vigilia) en la base de datos."""
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO registros_vigilia (usuario_id, fecha, titulo, descripcion, estado_animo, personas_clave, eventos_clave)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id;
+            """, (usuario_id, fecha, titulo, descripcion, estado_animo, personas_clave, eventos_clave))
+            nuevo_id = cursor.fetchone()[0]
+            conn.commit()
+            return nuevo_id
+
+def obtener_registros_vigilia_usuario(usuario_id, limite=50):
+    """Obtiene el historial de registros de vigilia filtrados por usuario."""
+    with obtener_conexion() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT * FROM registros_vigilia
+                WHERE usuario_id = %s
+                ORDER BY fecha DESC, fecha_creacion DESC
+                LIMIT %s;
+            """, (usuario_id, limite))
+            registros = cursor.fetchall()
+            for r in registros:
+                if r.get('fecha'):
+                    r['fecha'] = r['fecha'].strftime('%Y-%m-%d')
+            return registros
+
+def eliminar_registro_vigilia(registro_id, usuario_id):
+    """Elimina un registro de vigilia perteneciente al usuario especificado."""
+    with obtener_conexion() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                DELETE FROM registros_vigilia
+                WHERE id = %s AND usuario_id = %s;
+            """, (registro_id, usuario_id))
+            conn.commit()

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('vigilia_title') }} - Control Onírico{% endblock %}
+
+{% block head %}
+<!-- CDNs de rescate para asegurar Tailwind CSS y FontAwesome -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    indigo: { 500: '#6366f1', 600: '#4f46e5' },
+                    amber: { 500: '#f59e0b' }
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Encabezado con Botón de Regreso -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('main.index') }}" 
+               class="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition" 
+               title="{{ _('vigilia_back_dashboard') }}">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-sun text-amber-500"></i> {{ _('vigilia_header_title') }}
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{{ _('vigilia_header_subtitle') }}</p>
+            </div>
+        </div>
+        <button onclick="document.getElementById('modal-nueva-vigilia').classList.remove('hidden')" 
+                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-plus text-xs"></i> {{ _('vigilia_btn_new') }}
+        </button>
+    </div>
+
+    <!-- Grid de Registros -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="contenedor-vigilia">
+        {% if registros %}
+            {% for r in registros %}
+            <div class="bg-white dark:bg-slate-800/80 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between" id="tarjeta-vigilia-{{ r.id }}">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                            <i class="fa-regular fa-calendar mr-1 text-indigo-500"></i>{{ r.fecha }}
+                        </span>
+                        {% if r.estado_animo %}
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            {{ _('vigilia_mood_label') }}: {{ r.estado_animo }}/5
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">{{ r.titulo }}</h3>
+                    <p class="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line mb-4">{{ r.descripcion }}</p>
+
+                    {% if r.personas_clave or r.eventos_clave %}
+                    <div class="border-t border-slate-100 dark:border-slate-700/60 pt-3 text-xs space-y-1.5 text-slate-500 dark:text-slate-400">
+                        {% if r.personas_clave %}
+                        <div class="flex items-center gap-1.5"><i class="fa-solid fa-users text-indigo-500"></i><strong>{{ _('vigilia_people_label') }}:</strong> {{ r.personas_clave }}</div>
+                        {% endif %}
+                        {% if r.eventos_clave %}
+                        <div class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-500"></i><strong>{{ _('vigilia_signals_label') }}:</strong> {{ r.eventos_clave }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="border-t border-slate-100 dark:border-slate-700/60 pt-3 mt-4 flex justify-end">
+                    <button onclick="eliminarVigilia({{ r.id }})" class="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer" title="{{ _('vigilia_delete') }}">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-span-full text-center py-12 bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                <i class="fa-solid fa-sun text-4xl text-amber-500/40 mb-3"></i>
+                <h3 class="text-lg font-bold text-slate-700 dark:text-slate-200">{{ _('vigilia_empty_title') }}</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1 max-w-md mx-auto">{{ _('vigilia_empty_desc') }}</p>
+                <button onclick="document.getElementById('modal-nueva-vigilia').classList.remove('hidden')" 
+                        class="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl transition shadow-md inline-flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i> {{ _('vigilia_btn_create_first') }}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MODAL FLOTANTE -->
+<div id="modal-nueva-vigilia" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-feather-pointed text-indigo-500"></i> {{ _('vigilia_modal_title') }}
+            </h3>
+            <button onclick="document.getElementById('modal-nueva-vigilia').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form id="form-nueva-vigilia" class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ _('vigilia_field_title') }}</label>
+                <input type="text" name="titulo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="{{ _('vigilia_ph_title') }}" required>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ _('vigilia_field_date') }}</label>
+                    <input type="date" name="fecha" value="{{ fecha_hoy }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ _('vigilia_field_mood') }}</label>
+                    <select name="estado_animo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">{{ _('vigilia_select_option') }}</option>
+                        <option value="5">5 - {{ _('vigilia_mood_5') }}</option>
+                        <option value="4">4 - {{ _('vigilia_mood_4') }}</option>
+                        <option value="3">3 - {{ _('vigilia_mood_3') }}</option>
+                        <option value="2">2 - {{ _('vigilia_mood_2') }}</option>
+                        <option value="1">1 - {{ _('vigilia_mood_1') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ _('vigilia_field_desc') }}</label>
+                <textarea name="descripcion" rows="3" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="{{ _('vigilia_ph_desc') }}" required></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ _('vigilia_field_people') }}</label>
+                <input type="text" name="personas_clave" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="{{ _('vigilia_ph_people') }}">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ _('vigilia_field_signals') }}</label>
+                <input type="text" name="eventos_clave" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="{{ _('vigilia_ph_signals') }}">
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <button type="button" onclick="document.getElementById('modal-nueva-vigilia').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition cursor-pointer">
+                    {{ _('btn_cancel') }}
+                </button>
+                <button type="submit" id="btn-guardar-vigilia" class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold text-xs sm:text-sm hover:bg-indigo-500 transition shadow-md flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk"></i> {{ _('btn_save') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('form-nueva-vigilia').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar-vigilia');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> {{ _("vigilia_saving") }}';
+
+    const formData = new FormData(this);
+
+    fetch('/vigilia/nuevo', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> {{ _("btn_save") }}';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('{{ _("vigilia_server_error") }}');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> {{ _("btn_save") }}';
+    });
+});
+
+function eliminarVigilia(id) {
+    if(!confirm('{{ _("vigilia_confirm_delete") }}')) return;
+
+    fetch(`/vigilia/eliminar/${id}`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            const el = document.getElementById(`tarjeta-vigilia-${id}`);
+            if(el) el.remove();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(err => console.error(err));
+}
+</script>
+{% endblock %}

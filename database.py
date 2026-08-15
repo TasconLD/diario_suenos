@@ -90,4 +90,18 @@ def inicializar_base_datos():
                 ADD COLUMN IF NOT EXISTS idioma VARCHAR(5) DEFAULT 'es';
             """)
 
+            # 7. Tabla de Bitácora de Vigilia (Registros de Vida Real)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS registros_vigilia (
+                    id SERIAL PRIMARY KEY,
+                    usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+                    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+                    titulo VARCHAR(255) NOT NULL,
+                    descripcion TEXT NOT NULL,
+                    estado_animo INT CHECK (estado_animo BETWEEN 1 AND 5),
+                    personas_clave TEXT,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
             conn.commit()
